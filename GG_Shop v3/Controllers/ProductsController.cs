@@ -64,11 +64,11 @@ namespace GG_Shop_v3.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Create(
-    [Bind(Include = "Id,Title,Category_Id,Description,Status")] Product product,
-    List<Product_Sku> skus,
-    IEnumerable<HttpPostedFileBase> images,
-    decimal? BasePrice,
-    int? BaseQuantity)
+        [Bind(Include = "Id,Title,Category_Id,Description,Status")] Product product,
+        List<Product_Sku> skus,
+        IEnumerable<HttpPostedFileBase> images,
+        decimal? BasePrice,
+        int? BaseQuantity)
         {
             // Chuẩn hoá tên sản phẩm
             if (product != null && !string.IsNullOrWhiteSpace(product.Title))
