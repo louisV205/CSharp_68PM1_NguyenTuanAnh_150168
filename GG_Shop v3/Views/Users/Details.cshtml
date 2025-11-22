@@ -1,15 +1,14 @@
-﻿@model GG_Shop_v3.Models.User
-
-@{
+﻿@{
     ViewBag.Title = "Details";
     Layout = "~/Views/Shared/_Layout_admin.cshtml";
 }
+
 <div class="content-page">
     <div class="container-fluid">
         <div class="row">
             <div class="col-lg-12">
                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-                    <h4 class="mb-3">Chi tiết Người dùng: @Model.Username</h4>
+                    <h4 class="mb-3">Chi tiết Người dùng: <span id="username"></span></h4>
                     <a href="@Url.Action("Index", "Users")" class="btn btn-primary add-list">
                         <i class="las la-angle-left mr-2"></i>Quay lại Danh sách
                     </a>
@@ -19,13 +18,12 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between">
-                        <div class="header-title">
-                            <h5 class="card-title mb-0">Thông tin Tài khoản</h5>
-                        </div>
                         <div class="list-action">
-                            <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="Chỉnh sửa"
-                               href="@Url.Action("Edit", "Users", new { id = Model.Id })">
+                            <a class="btn btn-outline-success rounded-pill mt-2" data-toggle="tooltip" data-placement="top" id="btnEdit">
                                 <i class="ri-pencil-line mr-0"></i> Chỉnh sửa
+                            </a>
+                            <a class="btn btn-outline-secondary rounded-pill mt-2 btn-delete-user" data-toggle="tooltip" data-placement="top" data-id="@ViewBag.UserId">
+                                <i class="ri-delete-bin-line"></i> Xóa người dùng
                             </a>
                         </div>
                     </div>
@@ -36,23 +34,23 @@
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span class="text-secondary">Tên tài khoản :</span>
-                                        <strong>@Html.DisplayFor(model => model.Username)</strong>
+                                        <strong id="txtUsername"></strong>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span class="text-secondary">Mật khẩu :</span>
-                                        <strong>@Html.DisplayFor(model => model.Password)</strong>
+                                        <strong id="txtPassword"></strong>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span class="text-secondary">Email :</span>
-                                        <strong>@Html.DisplayFor(model => model.Email)</strong>
+                                        <strong id="txtEmail"></strong>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span class="text-secondary">Tên người dùng :</span>
-                                        <strong>@Html.DisplayFor(model => model.Full_Name)</strong>
+                                        <strong id="txtFullName"></strong>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span class="text-secondary">Số điện thoại :</span>
-                                        <strong>@Html.DisplayFor(model => model.Phone_Number)</strong>
+                                        <strong id="txtPhone"></strong>
                                     </li>
                                 </ul>
                             </div>
@@ -61,23 +59,23 @@
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span class="text-secondary">Quốc gia :</span>
-                                        <strong>@Html.DisplayFor(model => model.Country)</strong>
+                                        <strong id="txtCountry"></strong>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span class="text-secondary">Vai trò :</span>
-                                        <span class="badge badge-secondary">@Html.DisplayFor(model => model.Role)</span>
+                                        <span class="badge badge-secondary" id="txtRole"></span>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span class="text-secondary">Số đơn hàng :</span>
-                                        <strong>@Html.DisplayFor(model => model.Orders)</strong>
+                                        <strong id="txtOrders"></strong>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span class="text-secondary">Chi tiêu :</span>
-                                        <strong>@Html.DisplayFor(model => model.Total_Spent)</strong>
+                                        <strong id="txtTotalSpent"></strong>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span class="text-secondary">Cấp bậc :</span>
-                                        <strong>@Html.DisplayFor(model => model.Rank)</strong>
+                                        <strong id="txtRank"></strong>
                                     </li>
                                 </ul>
                             </div>
@@ -88,5 +86,76 @@
 
         </div>
     </div>
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-dark">Xác nhận xóa</h5>
+                </div>
+                <div class="modal-body">
+                    Bạn có chắc muốn xóa người dùng này?
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-warning mt-2" data-dismiss="modal">Hủy</button>
+                    <button id="confirmDelete" class="btn btn-warning mt-2">Xóa</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
+<script>
+$(document).ready(function() {
+    var userId = '@ViewBag.UserId';
+    var deleteId = userId;
+    // Lấy dữ liệu user bằng AJAX
+    $.ajax({
+        url: '/Users/GetUserDetails',
+        type: 'POST',
+        data: { id: userId },
+        success: function (res) {
+            $('#username').text(res.Username);
+            $('#txtUsername').text(res.Username);
+            $('#txtPassword').text(res.Password);
+            $('#txtEmail').text(res.Email);
+            $('#txtFullName').text(res.Full_Name);
+            $('#txtPhone').text(res.Phone_Number);
+            $('#txtCountry').text(res.Country);
+            $('#txtRole').text(res.Role);
+            $('#txtOrders').text(res.Orders);
+            $('#txtTotalSpent').text(res.Total_Spent);
+            $('#txtRank').text(res.Rank);
+
+            // Thiết lập nút Edit
+            $('#btnEdit').attr('href', '/Users/Edit/' + res.Id);
+        },
+        error: function() {
+            alert('Lỗi khi lấy dữ liệu người dùng');
+        }
+    });
+
+    // Khi nhấn nút XÓA
+    $(document).on("click", ".btn-delete-user", function () {
+        $("#deleteModal").modal("show");
+    });
+
+    // Xác nhận xóa
+    $("#confirmDelete").click(function () {
+
+        $.ajax({
+            url: "/Users/DeleteUser",
+            type: "POST",
+            data: { id: deleteId },
+            success: function (rs) {
+                $("#deleteModal").modal("hide");
+                alert(rs);
+                window.location.href = "/Users/Index";
+
+            },
+            error: function () {
+                alert("Lỗi hệ thống!");
+            }
+        });
+    });
+});
+</script>
