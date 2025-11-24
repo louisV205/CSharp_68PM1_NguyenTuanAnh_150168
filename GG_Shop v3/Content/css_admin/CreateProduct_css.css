@@ -65,3 +65,19 @@
     overflow: auto;
     max-height: 420px;
 }
+
+#colorsInput span,
+#sizesInput span {
+    background-color: #f8f9fa;
+    border-radius: 20px;
+    padding: 6px 12px;
+    margin: 4px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+}
+
+    #colorsInput span span,
+    #sizesInput span span {
+        margin-left: 8px;
+        cursor: pointer;

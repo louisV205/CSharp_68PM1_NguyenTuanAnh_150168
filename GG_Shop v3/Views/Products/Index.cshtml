@@ -1,8 +1,4 @@
-﻿@model IEnumerable<GG_Shop_v3.Models.Product>
-@using GG_Shop_v3.Models
-@using System.Linq
-
-@{
+﻿@{
     ViewBag.Title = "Danh sách sản phẩm";
     Layout = "~/Views/Shared/_Layout_admin.cshtml";
 }
@@ -30,8 +26,8 @@
                         <thead class="bg-white text-uppercase">
                             <tr class="ligth ligth-data text-center">
                                 <th>Ảnh</th>
-                                <th>Danh mục</th>
                                 <th>Tên sản phẩm</th>
+                                <th>Danh mục</th>
                                 <th>Mô tả</th>
                                 <th>Tồn kho</th>
                                 <th>Giá (VNĐ)</th>
@@ -39,98 +35,7 @@
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody class="ligth-body">
-                            @foreach (var item in Model)
-                            {
-                                var mainImg = item.Product_Images?.FirstOrDefault(i => i.Is_Main) ?? item.Product_Images?.FirstOrDefault();
-                                var totalQty = item.Product_Skus?.Sum(s => s.Quantity) ?? 0;
-                                var minPrice = item.Product_Skus?.Min(s => (decimal?)s.Price) ?? 0;
-                                var maxPrice = item.Product_Skus?.Max(s => (decimal?)s.Price) ?? 0;
-
-                                <tr class="text-center align-middle">
-                                    <td style="width: 100px;">
-                                        @if (mainImg != null)
-                                        {
-                                            <img src="@Url.Content(mainImg.Image_Url)" alt="Ảnh sản phẩm"
-                                                 class="img-thumbnail" style="width:80px; height:80px; object-fit:cover;" />
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted small">Không có ảnh</span>
-                                        }
-                                    </td>
-
-                                    <td>
-                                        @if (item.Category != null)
-                                        {@Html.DisplayFor(modelItem => item.Category.Name) }
-                                    else
-                                    { <span class="text-muted">—</span>}
-                                    </td>
-
-                                    <td>
-                                        <strong>@Html.DisplayFor(modelItem => item.Title)</strong>
-                                    </td>
-
-                                    <td class="text-muted">
-                                        @if (!String.IsNullOrEmpty(item.Description))
-                                        {
-                                            @Html.Raw(item.Description.Length > 80 ? item.Description.Substring(0, 80) + "..." : item.Description)
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">Không có mô tả</span>
-                                        }
-                                    </td>
-
-                                    <td>@totalQty</td>
-
-                                    <td>
-                                        @if (minPrice == maxPrice)
-                                        {
-                                            @String.Format("{0:N0}", minPrice)
-                                        }
-                                        else
-                                        {
-                                            @($"{String.Format("{0:N0}", minPrice)} - {String.Format("{0:N0}", maxPrice)}")
-                                        }
-                                    </td>
-
-                                    <td>
-                                        @if (!String.IsNullOrEmpty(item.Status))
-                                        {
-                                            if (item.Status.ToLower() == "active" || item.Status.ToLower() == "đang bán")
-                                            {
-                                                <span class="badge badge-success">Đang bán</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge badge-secondary">@item.Status</span>
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <span class="badge badge-light">Không rõ</span>
-                                        }
-                                    </td>
-
-                                    <td>
-                                        <div class="d-flex align-items-center justify-content-center list-action">
-                                            <a class="badge badge-info mr-2" data-toggle="tooltip" title="Xem chi tiết"
-                                               href="@Url.Action("Details", "Products", new { id = item.Id })">
-                                                <i class="ri-eye-line"></i>
-                                            </a>
-                                            <a class="badge bg-success mr-2" data-toggle="tooltip" title="Sửa"
-                                               href="@Url.Action("Edit", "Products", new { id = item.Id })">
-                                                <i class="ri-pencil-line"></i>
-                                            </a>
-                                            <a class="badge bg-warning btn-delete-product" data-toggle="tooltip" title="Xóa"
-                                               href="@Url.Action("Delete", "Products", new { id = item.Id })">
-                                                <i class="ri-delete-bin-line"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
+                        <tbody id="product-body" class="ligth-body">
                         </tbody>
                     </table>
                 </div>
@@ -138,3 +43,146 @@
         </div>
     </div>
 </div>
+
+<!-- Modal xác nhận xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title text-dark">Xác nhận xóa</h5>
+            </div>
+            <div class="modal-body">
+                Bạn có chắc muốn xóa sản phẩm này?
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-warning mt-2" data-dismiss="modal">Hủy</button>
+                <button id="confirmDelete" class="btn btn-warning mt-2">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="antiForgeryForm" style="display:none;">@Html.AntiForgeryToken()</form>
+
+@section scripts {
+    <script>
+    let deleteProductId = 0;
+
+    function getAntiForgeryToken() {
+        // lấy token từ form ẩn
+        return $('#antiForgeryForm input[name="__RequestVerificationToken"]').val();
+    }
+
+    function loadProducts() {
+        $.ajax({
+            url: '@Url.Action("GetProducts", "Products")',
+            type: 'GET',
+            success: function (data) {
+                let tbody = $("#product-body");
+                tbody.empty();
+
+                data.forEach(p => {
+                    // 🔹 Ảnh đại diện -> our controller trả Product_Images with Image_Url
+                    let mainImgObj = (p.Product_Images && p.Product_Images.length) ? (p.Product_Images.find(i => i.Is_Main) || p.Product_Images[0]) : null;
+                    let mainImgUrl = mainImgObj ? (mainImgObj.Image_Url || mainImgObj.ImageUrl || mainImgObj.Url) : null;
+
+                    let imgHtml = mainImgUrl
+                        ? `<img src="${mainImgUrl}" class="img-thumbnail" style="width:80px;height:80px;object-fit:cover;">`
+                        : `<span class="text-muted small">Không có ảnh</span>`;
+
+                    // 🔹 Tồn kho
+                    let totalQty = p.Product_Skus ? p.Product_Skus.reduce((sum, sku) => sum + (sku.Quantity || 0), 0) : 0;
+
+                    // 🔹 Giá min/max (controller đã trả MinPrice/MaxPrice)
+                    let priceText = "0";
+                    if (p.MinPrice != null && p.MaxPrice != null) {
+                        if (p.MinPrice === p.MaxPrice) priceText = Number(p.MinPrice).toLocaleString("vi-VN");
+                        else priceText = Number(p.MinPrice).toLocaleString("vi-VN") + " - " + Number(p.MaxPrice).toLocaleString("vi-VN");
+                    }
+
+                    // 🔹 Mô tả
+                    let desc = p.Description || "";
+                    if (desc.length > 80) desc = desc.substring(0, 80) + "...";
+
+                    // 🔹 Trạng thái
+                    let statusBadge = '<span class="badge badge-light">Không rõ</span>';
+                    if (p.Status) {
+                        let s = String(p.Status).toLowerCase();
+                        statusBadge = (s === "active" || s === "đang bán") ? '<span class="badge badge-success">Đang bán</span>' : `<span class="badge badge-secondary">${p.Status}</span>`;
+                    }
+
+                    let categoryHtml = (p.Category && p.Category.Name) ? p.Category.Name : '—';
+
+                    tbody.append(`
+                        <tr class="text-center align-middle" data-id="${p.Id}">
+                            <td style="width:100px;">${imgHtml}</td>
+                            <td><strong>${p.Title}</strong></td>
+                            <td>${categoryHtml}</td>
+                            <td class="text-muted">${desc}</td>
+                            <td>${totalQty}</td>
+                            <td>${priceText}</td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center list-action">
+                                    <a class="badge badge-info mr-2" href="/Products/Details/${p.Id}">
+                                        <i class="ri-eye-line"></i>
+                                    </a>
+                                    <a class="badge bg-success mr-2" href="/Products/Edit/${p.Id}">
+                                        <i class="ri-pencil-line"></i>
+                                    </a>
+                                    <a class="badge bg-warning btn-delete-product" data-id="${p.Id}" style="cursor:pointer;">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                // re-init datatable
+                if ($.fn.DataTable.isDataTable('#datatable')) {
+                    $('#datatable').DataTable().destroy();
+                }
+                $('#datatable').DataTable();
+            },
+            error: function () {
+                alert("Lỗi khi tải dữ liệu sản phẩm!");
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        loadProducts();
+
+        // Click nút xóa — hiện modal
+        $(document).on("click", ".btn-delete-product", function () {
+            deleteProductId = $(this).data("id");
+            $("#deleteModal").modal("show");
+        });
+
+        // Xác nhận xóa
+        $("#confirmDelete").click(function () {
+            var token = getAntiForgeryToken();
+            $.ajax({
+                url: '/Products/DeleteAjax',
+                type: 'POST',
+                data: { id: deleteProductId, __RequestVerificationToken: token },
+                success: function (res) {
+                    $("#deleteModal").modal("hide");
+                    if (res && res.success) {
+                        if ($.fn.DataTable.isDataTable('#datatable')) {
+                            $('#datatable').DataTable().destroy();
+                        }
+                        loadProducts();
+                    } else {
+                        alert(res && res.message ? res.message : "Không xóa được sản phẩm.");
+                    }
+                },
+                error: function () {
+                    alert("Lỗi hệ thống khi xóa!");
+                }
+            });
+        });
+    });
+    </script>
+}
