@@ -1,7 +1,4 @@
-﻿@model IEnumerable<GG_Shop_v3.Models.Category>
-@using GG_Shop_v3.Models
-@using System.Linq
-
+﻿@using GG_Shop_v3.Models
 @{
     ViewBag.Title = "Danh sách các danh mục";
     Layout = "~/Views/Shared/_Layout_admin.cshtml";
@@ -9,40 +6,128 @@
 
 <div class="content-page">
     <div class="container-fluid">
+
         <h2>Danh mục</h2>
         <a href="@Url.Action("Create", "Categories")" class="btn btn-danger mt-2">
             Tạo danh mục
         </a>
 
-        <table class="table">
-            <tr>
-                <th>Tên danh mục</th>
-                <th>Mô tả</th>
-                <th></th>
-            </tr>
+        <!-- Form ẩn chứa AntiForgeryToken -->
+        <form id="antiForgeryForm">
+            @Html.AntiForgeryToken()
+        </form>
 
-            @foreach (var item in Model)
-            {
+        <!-- Thanh tìm kiếm realtime -->
+        <div class="form-group mt-3 col-md-4">
+            <input type="text" id="searchInput" class="form-control form-control-sm"
+                   placeholder="Tìm kiếm theo chữ cái đầu tiên..." />
+        </div>
+
+        <!-- Table danh mục -->
+        <table class="table" id="categoryTable">
+            <thead>
                 <tr>
-                    <td>@item.Name</td>
-                    <td>@item.Description</td>
-                    <td>
-                        <a href="@Url.Action("Edit", new { id = item.Id })" class="badge badge-success mr-2" title="Sửa">
-                            <i class="fas fa-pencil-alt"></i>
-                        </a>
-                        <a href="@Url.Action("Details", new { id = item.Id })" class="badge badge-info mr-2" title="Chi tiết">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <a href="@Url.Action("Delete", new { id = item.Id })" class="badge bg-warning mr-2" title="Xóa">
-                            <i class="fas fa-trash-alt"></i>
-                        </a>
-                    </td>
+                    <th>Tên danh mục</th>
+                    <th>Mô tả</th>
+                    <th></th>
                 </tr>
-            }
-
-
+            </thead>
+            <tbody>
+                <!-- Rows sẽ được render bằng JS -->
+            </tbody>
         </table>
-
-
     </div>
 </div>
+<!-- Modal xác nhận xóa danh mục -->
+<div class="modal fade" id="DeleteCategoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h5 class="modal-title text-white">Xác nhận xóa</h5>
+            </div>
+            <div class="modal-body">
+                Bạn có chắc chắn muốn xóa danh mục này?
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-danger" data-dismiss="modal">Hủy</button>
+                <button id="confirmDeleteCategory" class="btn btn-danger">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+$(document).ready(function() {
+
+    // Load danh sách ban đầu
+    loadCategories();
+
+    // Tìm kiếm realtime
+    $("#searchInput").on("keyup", function() {
+        var searchValue = $(this).val();
+        loadCategories(searchValue);
+    });
+
+    // Function load danh mục
+    function loadCategories(search = "") {
+        $.ajax({
+            url: '@Url.Action("GetCategories", "Categories")',
+            type: 'GET',
+            data: { search: search },
+            success: function(data) {
+                var tbody = $("#categoryTable tbody");
+                tbody.empty();
+
+                if(data.length === 0) {
+                    tbody.append('<tr><td colspan="3">Không tìm thấy danh mục nào.</td></tr>');
+                } else {
+                    $.each(data, function(index, item) {
+                        var row = '<tr>' +
+                            '<td>' + item.Name + '</td>' +
+                            '<td>' + (item.Description || '') + '</td>' +
+                            '<td>' +
+                                '<a href="/Categories/Edit?id=' + item.Id + '" class="badge badge-success mr-2" title="Sửa"><i class="fas fa-pencil-alt"></i></a>' +
+                                '<a href="/Categories/Details?id=' + item.Id + '" class="badge badge-info mr-2" title="Chi tiết"><i class="fas fa-eye"></i></a>' +
+                                '<a href="#" class="badge bg-warning mr-2 deleteBtn" data-id="' + item.Id + '" title="Xóa"><i class="fas fa-trash-alt"></i></a>' +
+                            '</td>' +
+                        '</tr>';
+                        tbody.append(row);
+                    });
+                }
+            },
+            error: function(xhr) {
+                console.log(xhr.responseText);
+                alert("Có lỗi khi tải danh sách. Kiểm tra console để xem chi tiết.");
+            }
+        });
+    }
+
+    // Xử lý click nút Xóa
+    $(document).on("click", ".deleteBtn", function(e) {
+        e.preventDefault();
+        var id = $(this).data("id");
+        var token = $('#antiForgeryForm input[name="__RequestVerificationToken"]').val();
+
+        if(confirm("Bạn có chắc chắn muốn xóa danh mục này?")) {
+            $.ajax({
+                url: '@Url.Action("DeleteCategory", "Categories")',
+                type: 'POST',
+                data: {
+                    id: id,
+                    __RequestVerificationToken: token  // token gửi trong data
+                },
+                success: function(result) {
+                    alert(result.message);
+                    if(result.success) loadCategories($("#searchInput").val());
+                },
+                error: function(xhr) {
+                    alert("Có lỗi xảy ra: " + xhr.responseText);
+                }
+            });
+        }
+    });
+
+});
+    </script>
+}
