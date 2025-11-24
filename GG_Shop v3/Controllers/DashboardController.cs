@@ -26,8 +26,6 @@ namespace GG_Shop_v3.Controllers
             int TongSanPham = db.order_items.Count();
             ViewBag.TongSanPham = TongSanPham;
 
-
-
             return View();
         }
 
