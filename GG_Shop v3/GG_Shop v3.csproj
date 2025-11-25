@@ -133,7 +133,6 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\CategoriesController.cs" />
-    <Compile Include="Controllers\DashboardController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\OrdersController.cs" />
     <Compile Include="Controllers\ProductsController.cs" />
@@ -160,6 +159,7 @@
     <Content Include="Content\css\bootstrap.min.css" />
     <Content Include="Content\css\elegant-icons.css" />
     <Content Include="Content\css\font-awesome.min.css" />
+    <Content Include="Content\css\jquery-ui.min.css" />
     <Content Include="Content\css\magnific-popup.css" />
     <Content Include="Content\css\nice-select.css" />
     <Content Include="Content\css\owl.carousel.min.css" />
@@ -260,6 +260,7 @@
     <Content Include="Content\img_admin\icon\12.png" />
     <Content Include="Content\img_admin\icon\13.png" />
     <Content Include="Content\img_admin\icon\14.png" />
+    <Content Include="Content\img_admin\icon\1421335.png" />
     <Content Include="Content\img_admin\icon\15.png" />
     <Content Include="Content\img_admin\icon\16.png" />
     <Content Include="Content\img_admin\icon\17.png" />
@@ -268,7 +269,11 @@
     <Content Include="Content\img_admin\icon\20.png" />
     <Content Include="Content\img_admin\icon\21.png" />
     <Content Include="Content\img_admin\icon\22.png" />
+    <Content Include="Content\img_admin\icon\icon-order-1.png" />
+    <Content Include="Content\img_admin\icon\images.png" />
     <Content Include="Content\img_admin\icon\pdf.png" />
+    <Content Include="Content\img_admin\icon\png-clipart-shopping-cart-icon-product-return-shopping-cart-retail-supermarket-thumbnail.png" />
+    <Content Include="Content\img_admin\icon\productzz.jpg" />
     <Content Include="Content\img_admin\intro\btn-icon.svg" />
     <Content Include="Content\img_admin\intro\clients\01.png" />
     <Content Include="Content\img_admin\intro\clients\02.png" />
@@ -4602,12 +4607,9 @@
     <Content Include="Scripts\js\mixitup.min.js" />
     <Content Include="Scripts\js\owl.carousel.min.js" />
     <Content Include="Scripts\js_admin\animated.js" />
-    <Content Include="Scripts\js_admin\apexcharts.js" />
     <Content Include="Scripts\js_admin\app.js" />
     <Content Include="Scripts\js_admin\backend-bundle.min.js" />
     <Content Include="Scripts\js_admin\bstreeview.js" />
-    <Content Include="Scripts\js_admin\chart-custom.js" />
-    <Content Include="Scripts\js_admin\charts.js" />
     <Content Include="Scripts\js_admin\core.js" />
     <Content Include="Scripts\js_admin\countdown.js" />
     <Content Include="Scripts\js_admin\country2.js" />
@@ -4615,9 +4617,6 @@
     <Content Include="Scripts\js_admin\croppy.js" />
     <Content Include="Scripts\js_admin\customizer.js" />
     <Content Include="Scripts\js_admin\flex-tree.min.js" />
-    <Content Include="Scripts\js_admin\highcharts-3d.js" />
-    <Content Include="Scripts\js_admin\highcharts-more.js" />
-    <Content Include="Scripts\js_admin\highcharts.js" />
     <Content Include="Scripts\js_admin\imagesloaded.pkgd.min.js" />
     <Content Include="Scripts\js_admin\intro.js" />
     <Content Include="Scripts\js_admin\jquery.appear.js" />
@@ -4665,7 +4664,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <Content Include="Views\Dashboard\Index.cshtml" />
     <Content Include="Views\Shared\_Footer.cshtml" />
     <Content Include="Views\Shared\_Header.cshtml" />
     <Content Include="Views\Shared\_Layout_admin.cshtml" />
