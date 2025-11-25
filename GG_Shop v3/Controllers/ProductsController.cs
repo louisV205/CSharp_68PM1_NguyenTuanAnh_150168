@@ -133,202 +133,93 @@ namespace GG_Shop_v3.Controllers
             return View();
         }
 
-        [HttpGet]
-        public JsonResult CreateProduct(string title, List<Product_Sku> skus, IEnumerable<HttpPostedFileBase> images, decimal? BasePrice, int? BaseQuantity)
+        [HttpPost]
+        //[ValidateAntiForgeryToken]
+        public JsonResult CreateAjax()
         {
-            if (string.IsNullOrWhiteSpace(title))
-            {
-                return Json(new { success = false, message = "Tên sản phẩm không được để trống." }, JsonRequestBehavior.AllowGet);
-            }
-
-            var titleLower = title.Trim().ToLower();
-            if (db.products.Any(p => p.Title.ToLower() == titleLower))
-            {
-                return Json(new { success = false, message = "Tên sản phẩm đã tồn tại." }, JsonRequestBehavior.AllowGet);
-            }
-
             using (var tran = db.Database.BeginTransaction())
             {
                 try
                 {
+                    string title = Request["Title"];
+                    string description = Request["Description"];
+                    int categoryId = int.Parse(Request["Category_Id"]);
+                    string status = Request["Status"];
+
+                    if (string.IsNullOrWhiteSpace(title))
+                        return Json(new { success = false, message = "Tên sản phẩm không được để trống." });
+
+                    if (db.products.Any(p => p.Title.Trim().ToLower() == title.Trim().ToLower()))
+                        return Json(new { success = false, message = "Tên sản phẩm đã tồn tại." });
+
                     var product = new Product
                     {
                         Title = title.Trim(),
-                        // gán thêm các thuộc tính khác nếu cần
+                        Description = description,
+                        Status = status,
+                        Category_Id = categoryId,
                     };
+
                     db.products.Add(product);
                     db.SaveChanges();
 
-                    // lưu skus
-                    if (skus != null)
+                    // Lưu ảnh
+                    var uploadFolder = Server.MapPath("~/Uploads/Products");
+                    if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
+
+                    var files = Request.Files;
+                    for (int i = 0; i < files.Count; i++)
                     {
-                        foreach (var s in skus)
-                        {
-                            bool isEmpty =
-                                string.IsNullOrWhiteSpace(s.Sku)
-                                && string.IsNullOrWhiteSpace(s.Color)
-                                && string.IsNullOrWhiteSpace(s.Size)
-                                && (s.Quantity == 0)
-                                && (s.Price == 0m);
+                        var file = files[i];
+                        if (file == null || file.ContentLength == 0) continue;
 
-                            if (isEmpty) continue;
-                            s.Product_Id = product.Id;
-                            if ((s.Price == 0m || s.Price == null) && BasePrice.HasValue) s.Price = BasePrice.Value;
-                            if ((s.Quantity == 0) && BaseQuantity.HasValue) s.Quantity = BaseQuantity.Value;
-                            db.product_skus.Add(s);
-                        }
-                    }
+                        var fileName = Guid.NewGuid().ToString("N") + Path.GetExtension(file.FileName);
+                        var path = Path.Combine(uploadFolder, fileName);
 
-                    // lưu ảnh
-                    if (images != null)
-                    {
-                        var uploadFolder = Server.MapPath("~/uploads/products");
-                        if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
-
-                        foreach (var file in images)
-                        {
-                            if (file == null || file.ContentLength <= 0) continue;
-                            var ext = Path.GetExtension(file.FileName);
-                            var unique = Guid.NewGuid().ToString("N") + ext;
-                            var path = Path.Combine(uploadFolder, unique);
-
-                            file.SaveAs(path);
-
-                            db.product_images.Add(new Product_Image
-                            {
-                                Product_Id = product.Id,
-                                Image_Url = "/uploads/products/" + unique,
-                                Is_Main = false
-                            });
-                        }
-                    }
-
-                    db.SaveChanges();
-                    tran.Commit();
-
-                    var json = new
-                    {
-                        product.Id,
-                        product.Title,
-                        product.Description,
-                        CategoryName = product.Category?.Name,
-                        Images = db.product_images.Where(i => i.Product_Id == product.Id).Select(i => new
-                        {
-                            i.Id,
-                            Url = string.IsNullOrEmpty(i.Image_Url) ? null : Url.Content(i.Image_Url),
-                            i.Is_Main
-                        }).ToList(),
-                        Skus = db.product_skus.Where(s => s.Product_Id == product.Id).Select(s => new
-                        {
-                            s.Id,
-                            s.Sku,
-                            s.Color,
-                            s.Size,
-                            Price = s.Price,
-                            Quantity = s.Quantity,
-                            Total = s.Price * s.Quantity
-                        }).ToList(),
-                        product.Status,
-                        redirectUrl = Url.Action("Details", "Products", new { id = product.Id })
-                    };
-
-                    return Json(new { success = true, data = json }, JsonRequestBehavior.AllowGet);
-                }
-                catch (Exception ex)
-                {
-                    tran.Rollback();
-                    return Json(new { success = false, message = "Lỗi khi lưu: " + ex.Message }, JsonRequestBehavior.AllowGet);
-                }
-            }
-        }
-
-        [HttpPost]
-        public JsonResult CreateAjax()
-        {
-            try
-            {
-                // Lấy dữ liệu cơ bản từ form
-                string title = Request["Title"];
-                string description = Request["Description"];
-                string status = Request["Status"];
-                int categoryId = int.TryParse(Request["Category_Id"], out var cid) ? cid : 0;
-
-                // Kiểm tra trùng tên
-                if (db.products.Any(p => p.Title == title))
-                {
-                    return Json(new { success = false, message = "Tên sản phẩm đã tồn tại" });
-                }
-
-                // Tạo product
-                var product = new Product
-                {
-                    Title = title,
-                    Description = description,
-                    Status = status,
-                    Category_Id = categoryId
-                };
-                db.products.Add(product);
-                db.SaveChanges(); // để có Id
-
-                // Lưu ảnh upload
-                var files = Request.Files;
-                for (int i = 0; i < files.Count; i++)
-                {
-                    var file = files[i];
-                    if (file != null && file.ContentLength > 0)
-                    {
-                        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-                        var path = Path.Combine(Server.MapPath("~/Uploads/Products"), fileName);
-                        Directory.CreateDirectory(Path.GetDirectoryName(path));
                         file.SaveAs(path);
 
                         db.product_images.Add(new Product_Image
                         {
                             Product_Id = product.Id,
                             Image_Url = "/Uploads/Products/" + fileName,
-                            Is_Main = false
+                            Is_Main = i == 0
                         });
                     }
-                }
 
-                // Lấy Colors và Sizes (nếu cần lưu riêng)
-                var colorsJson = Request["Colors"];
-                var sizesJson = Request["Sizes"];
-                var colors = string.IsNullOrEmpty(colorsJson) ? new List<string>() :
-                    Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(colorsJson);
-                var sizes = string.IsNullOrEmpty(sizesJson) ? new List<string>() :
-                    Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(sizesJson);
-
-                // Lưu SKU từ bảng biến thể
-                var keys = Request.Form.AllKeys.Where(k => k.StartsWith("skus[") && k.EndsWith("].Sku")).ToList();
-                foreach (var key in keys)
-                {
-                    var prefix = key.Substring(0, key.IndexOf("].Sku") + 1); // skus[0], skus[1], ...
-                    var sku = Request[prefix + ".Sku"];
-                    var color = Request[prefix + ".Color"];
-                    var size = Request[prefix + ".Size"];
-                    var quantity = int.TryParse(Request[prefix + ".Quantity"], out var q) ? q : 0;
-                    var price = decimal.TryParse(Request[prefix + ".Price"], out var p) ? p : 0;
-
-                    db.product_skus.Add(new Product_Sku
+                    // Lưu SKU
+                    var keys = Request.Form.AllKeys.Where(k => k.StartsWith("skus[") && k.EndsWith("].Sku"));
+                    foreach (var key in keys)
                     {
-                        Product_Id = product.Id,
-                        Sku = sku,
-                        Color = color,
-                        Size = size,
-                        Quantity = quantity,
-                        Price = price
-                    });
+                        string idx = key.Substring(5, key.IndexOf("]") - 5);
+
+                        db.product_skus.Add(new Product_Sku
+                        {
+                            Product_Id = product.Id,
+                            Sku = Request[$"skus[{idx}].Sku"],
+                            Color = Request[$"skus[{idx}].Color"],
+                            Size = Request[$"skus[{idx}].Size"],
+                            Quantity = int.Parse(Request[$"skus[{idx}].Quantity"]),
+                            Price = decimal.Parse(Request[$"skus[{idx}].Price"]),
+                        });
+                    }
+
+                    db.SaveChanges();
+                    tran.Commit();
+
+                    return Json(new { success = true, redirectUrl = Url.Action("Index") });
                 }
-
-                db.SaveChanges();
-
-                return Json(new { success = true, redirectUrl = Url.Action("Index") });
+                catch (Exception ex)
+                {
+                    tran.Rollback();
+                    return Json(new { success = false, message = ex.Message });
+                }
             }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Lỗi khi thêm sản phẩm: " + ex.Message });
-            }
+        }
+        [HttpGet]
+        public JsonResult CheckTitle(string title)
+        {
+            bool exists = db.products.Any(p => p.Title.ToLower() == title.Trim().ToLower());
+            return Json(new { exists }, JsonRequestBehavior.AllowGet);
         }
 
 
