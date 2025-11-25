@@ -24,12 +24,10 @@ namespace GG_Shop_v3.Controllers
         public JsonResult GetCategories(string search = "")
         {
             var categories = db.categories.AsQueryable();
-
             if (!string.IsNullOrEmpty(search))
             {
                 categories = categories.Where(c => c.Name.ToLower().StartsWith(search.ToLower()));
             }
-
             var list = categories.OrderBy(c => c.Name)
                                  .Select(c => new
                                  {
@@ -38,7 +36,6 @@ namespace GG_Shop_v3.Controllers
                                      c.Description
                                  })
                                  .ToList();
-
             return Json(list, JsonRequestBehavior.AllowGet);
         }
 
@@ -59,7 +56,6 @@ namespace GG_Shop_v3.Controllers
                 category.Name,
                 category.Description
             };
-
             return Json(result, JsonRequestBehavior.AllowGet);
         }
 
@@ -69,9 +65,8 @@ namespace GG_Shop_v3.Controllers
             return View();
         }
 
-        // POST: Tạo mới danh mục (Ajax)
+        // POST: Tạo mới danh mục (Ajax) 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public JsonResult CreateCategory(Category category)
         {
             if (category == null)
@@ -89,7 +84,6 @@ namespace GG_Shop_v3.Controllers
                     .Select(e => e.ErrorMessage)
                     .Where(m => !string.IsNullOrEmpty(m))
                     .ToList();
-
                 return Json(new { success = false, message = "Dữ liệu không hợp lệ", errors = errors });
             }
 
@@ -102,7 +96,6 @@ namespace GG_Shop_v3.Controllers
             {
                 db.categories.Add(category);
                 db.SaveChanges();
-
                 return Json(new { success = true, message = "Tạo danh mục thành công!" });
             }
             catch (Exception ex)
@@ -111,7 +104,7 @@ namespace GG_Shop_v3.Controllers
             }
         }
 
-        // GET: Categories/Edit/5 (trả View form + data đã load sẵn trong model)
+        // GET: Categories/Edit/5
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -124,9 +117,8 @@ namespace GG_Shop_v3.Controllers
             return View(category);
         }
 
-        // POST: Cập nhật danh mục (Ajax)
+        // POST: Cập nhật danh mục (Ajax) 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public JsonResult UpdateCategory(Category category)
         {
             if (!ModelState.IsValid)
@@ -143,15 +135,12 @@ namespace GG_Shop_v3.Controllers
 
             existing.Name = category.Name;
             existing.Description = category.Description;
-
             db.Entry(existing).State = EntityState.Modified;
             db.SaveChanges();
 
             return Json(new { success = true, message = "Cập nhật thành công!" });
         }
 
-        // GET: Lấy dữ liệu để hiển thị modal xác nhận xóa
-        [HttpGet]
         // GET: Categories/Details/5
         public ActionResult Details(int? id)
         {
@@ -162,13 +151,11 @@ namespace GG_Shop_v3.Controllers
             if (category == null)
                 return HttpNotFound();
 
-            return View(category); // trả về View Details.cshtml với model Category
+            return View(category);
         }
 
-
-        // POST: Xóa danh mục (Ajax)
+        // POST: Xóa danh mục (Ajax) 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public JsonResult DeleteCategory(int id)
         {
             try
@@ -179,7 +166,6 @@ namespace GG_Shop_v3.Controllers
 
                 db.categories.Remove(category);
                 db.SaveChanges();
-
                 return Json(new { success = true, message = "Xóa thành công!" });
             }
             catch (Exception ex)
@@ -194,6 +180,5 @@ namespace GG_Shop_v3.Controllers
                 db.Dispose();
             base.Dispose(disposing);
         }
-        
     }
 }
