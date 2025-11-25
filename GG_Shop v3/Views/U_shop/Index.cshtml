@@ -1,0 +1,113 @@
+﻿@{
+    ViewBag.Title = "Shop";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+
+<section class="shop spad">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3">
+                <div class="shop__sidebar">
+                    <div class="shop__sidebar__accordion">
+                        <div class="accordion" id="accordionExample">
+                            <div class="card">
+                                <div class="card-heading">
+                                    <a data-toggle="collapse" data-target="#collapseOne">Danh mục sản phẩm</a>
+                                </div>
+                                <div id="collapseOne" class="collapse show" data-parent="#accordionExample">
+                                    <div class="card-body">
+                                        <div class="shop__sidebar__categories">
+                                            <ul id="categoryList" class="nice-scroll">
+                                                <!-- Categories load AJAX -->
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-heading">
+                                    <a data-toggle="collapse" data-target="#collapseTwo">Giá</a>
+                                </div>
+                                <div id="collapseTwo" class="collapse show" data-parent="#accordionExample">
+                                    <div class="card-body">
+                                        <ul>
+                                            <li><a href="#">0k - 200k</a></li>
+                                            <li><a href="#">200k - 500k</a></li>
+                                            <li><a href="#">500k - 1,000k</a></li>
+                                            <li><a href="#">1,000k+</a></li>
+                                            
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Size -->
+                            <div class="card">
+                                <div class="card-heading">
+                                    <a data-toggle="collapse" data-target="#collapseThree">Size</a>
+                                </div>
+                                <div id="collapseThree" class="collapse show" data-parent="#accordionExample">
+                                    <div class="card-body">
+                                        <label>XS <input type="radio" name="size"></label>
+                                        <label>S <input type="radio" name="size"></label>
+                                        <label>M <input type="radio" name="size"></label>                                        
+                                        <label>XL <input type="radio" name="size"></label>
+                                        <label>XXL <input type="radio" name="size"></label>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="row" id="productList">
+                    <!-- Products load AJAX -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section scripts{
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+$(document).ready(function(){
+    // Load Categories
+    $.getJSON('@Url.Action("GetCategories", "U_shop")', function(categories){
+        $('#categoryList').empty();
+        $.each(categories, function(i, c){
+            $('#categoryList').append('<li><a href="#">' + c.Name + '</a></li>');
+        });
+    });
+
+    // Load Products
+    $.getJSON('@Url.Action("GetProducts", "U_shop")', function(products){
+        $('#productList').empty();
+        $.each(products, function(i, p){
+            var productHtml = `
+                <div class="col-lg-4 col-md-6 col-sm-6">
+                    <div class="product__item">
+                        <div class="product__item__pic set-bg" style="background-image:url('${p.ImageUrl}')">
+                            
+                        </div>
+                        <div class="product__item__text">
+                            <h6>${p.Title}</h6>
+                            <a href="#" class="add-cart">+ Add To Cart</a>
+                            <h5>${p.Price}đ</h5>
+                        </div>
+                    </div>
+                </div>`;
+            $('#productList').append(productHtml);
+        });
+    });
+});
+    </script>
+}
+
+
+
