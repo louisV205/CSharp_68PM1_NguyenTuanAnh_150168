@@ -134,7 +134,6 @@ namespace GG_Shop_v3.Controllers
         }
 
         [HttpPost]
-        //[ValidateAntiForgeryToken]
         public JsonResult CreateAjax()
         {
             using (var tran = db.Database.BeginTransaction())
