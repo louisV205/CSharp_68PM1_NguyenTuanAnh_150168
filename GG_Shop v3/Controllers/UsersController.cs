@@ -68,6 +68,7 @@ namespace GG_Shop_v3.Controllers
             string rank_str = Request["slc_rank"];
             string total_spent_str = Request["total_spent"];
             string role_str = Request["slc_role"];
+            string status = "Hoạt động";
 
             int orders;
             int.TryParse(orders_str, out orders);
@@ -80,7 +81,7 @@ namespace GG_Shop_v3.Controllers
             }
             else
             {
-                User user = new User(username_str, email_str, password_str, full_name_str, phone_number_str, country_str, orders, rank_str, total_spent, role_str);
+                User user = new User(username_str, email_str, password_str, full_name_str, phone_number_str, country_str, orders, rank_str, total_spent, role_str, status);
                 try
                 {
                     db.users.Add(user);
@@ -124,6 +125,7 @@ namespace GG_Shop_v3.Controllers
             string orders_str = Request["Orders"];
             string rank_str = Request["Rank"];
             string total_spent_str = Request["Total_Spent"];
+            string status = Request["Status"]; ;
 
             int Id;
             int.TryParse(Id_str, out Id);
@@ -133,7 +135,7 @@ namespace GG_Shop_v3.Controllers
             double total_spent;
             double.TryParse(total_spent_str, out total_spent);
 
-            User user = new User(username_str, email_str, password_str, full_name_str, phone_number_str, country_str, orders, rank_str, total_spent, role_str);
+            User user = new User(username_str, email_str, password_str, full_name_str, phone_number_str, country_str, orders, rank_str, total_spent, role_str , status);
             user.Id = Id;
             if (db.users.Where(u => u.Id != Id).Any(u => u.Username == username_str))
             {
