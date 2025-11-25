@@ -67,28 +67,7 @@ namespace GG_Shop_v3.Controllers
             if (order == null)
                 return HttpNotFound();
 
-            // 🟢 Tính số tiền giảm (discount) mà KHÔNG thêm thuộc tính vào model
-            decimal discount = 0;
-
-            if (order.Promo_Id.HasValue && order.Promotion != null)
-            {
-                var item = order.Order_Items;
-                var promo = order.Promotion;
-                var total = item.Sum(i => i.Price * i.Quantity);
-                bool validDate = order.Created_At >= promo.Start_Date && order.Created_At <= promo.End_Date;
-                bool validMinValue = promo.Min_Order_Value == null || order.Total_Amount >= promo.Min_Order_Value;
-                bool validStatus = promo.Status != null && promo.Status.ToLower() == "active";
-
-                if (validDate && validMinValue && validStatus)
-                {
-                    if (promo.Discount_Percentage.HasValue)
-                        discount = total * (promo.Discount_Percentage.Value / 100);
-                    else if (promo.Discount_Amount.HasValue)
-                        discount = promo.Discount_Amount.Value;
-                }
-            }
-
-            ViewBag.Discount = discount;
+            
 
             return View(order);
         }
@@ -116,19 +95,7 @@ namespace GG_Shop_v3.Controllers
         }
         public ActionResult Create()
         {
-            ViewBag.User_Id = new SelectList(db.users, "Id", "Username");
-            ViewBag.Promo_Id = new SelectList(db.promotions, "Id", "Promo_Code");
-            ViewBag.SkuList = new SelectList(db.product_skus.Include(p => p.Product), "Id", "Sku");
-
-            // Danh sách trạng thái đơn hàng
-            ViewBag.StatusList = new SelectList(new[]
-            {
-                new { Value = "Đang xử lí", Text = "Đang xử lí" },
-                new { Value = "Đã giao", Text = "Đã giao" },
-                new { Value = "Hoàn thành", Text = "Hoàn thành" },
-                new { Value = "Đã trả", Text = "Đã trả" },
-                new { Value = "Đã hủy", Text = "Đã hủy" }
-            }, "Value", "Text");
+            
 
             Session["TempOrderItems"] = new List<Order_Item>();
             return View(new Order());
@@ -416,14 +383,7 @@ namespace GG_Shop_v3.Controllers
             if (order == null)
                 return HttpNotFound();
 
-            var promos = db.promotions
-                .Select(p => new { Id = (int?)p.Id, p.Promo_Code })
-                .ToList();
-
-            promos.Insert(0, new { Id = (int?)null, Promo_Code = "(Không áp dụng khuyến mãi)" });
-
-            ViewBag.Promo_Id = new SelectList(promos, "Id", "Promo_Code", order.Promo_Id);
-            ViewBag.User_Id = new SelectList(db.users, "Id", "Username", order.User_Id);
+            
 
             return View(order);
         }
@@ -446,28 +406,7 @@ namespace GG_Shop_v3.Controllers
             if (order == null)
                 return HttpNotFound();
 
-            // Trả dữ liệu JSON cho AJAX
-            var json = new
-            {
-                Id = order.Id,
-                UserName = order.User.Username,
-                PromoCode = order.Promotion != null ? order.Promotion.Promo_Code : null,
-                Total_Amount = order.Total_Amount,
-                Status = order.Status,
-                Shipping_Address = order.Shipping_Address,
-                Created_At = order.Created_At.ToString("dd/MM/yyyy HH:mm"),
-                Items = order.Order_Items.Select(oi => new
-                {
-                    Product = oi.Product_Sku.Product.Title,
-                    Color = oi.Product_Sku.Color,
-                    Size = oi.Product_Sku.Size,
-                    Quantity = oi.Quantity,
-                    Price = oi.Price,
-                    Total = oi.Price * oi.Quantity
-                }).ToList()
-            };
-
-            return Json(json, JsonRequestBehavior.AllowGet);
+            return View();
         }
 
         // POST: Orders/DeleteOrder
