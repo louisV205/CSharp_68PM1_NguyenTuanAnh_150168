@@ -129,6 +129,7 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
+            //Khởi tạo dữ liệu
             const token = $('input[name="__RequestVerificationToken"]').val();
             const colors = new Set();
             const sizes = new Set();
@@ -144,7 +145,7 @@
             $('#Title').on('blur keydown', function (e) {
                 if (e.type === 'blur' || e.key === 'Enter') {
                     e.preventDefault();
-                    const title = $(this).val().trim();
+                    const title = $(this).val().trim();//trim() loại khoảng trắng 
                     if (!title) return;
                     $.get('/Products/CheckTitle', { title }, function (res) {
                         if (res.exists) {
@@ -159,7 +160,7 @@
             // Thêm tag
             function addTag(container, set, value) {
                 const v = value.trim();
-                if (!v || set.has(v)) return;
+                if (!v || set.has(v)) return;// điều kiện kiểm tra. Nếu nhập rỗng/đã tồn tại thì hàm sẽ dừng, không thêm tag mới
                 set.add(v);
                 const $tag = $(`<span class="badge badge-light text-dark mr-2 mb-2 p-2">${v} <span class="ml-1" style="cursor:pointer;">×</span></span>`);
                 $tag.find('span').on('click', function () { set.delete(v); $tag.remove(); generateVariants(); });
@@ -174,7 +175,7 @@
             function generateVariants() {
                 const $tbody = $('#variantsTable tbody').empty();
                 const colorArr = Array.from(colors), sizeArr = Array.from(sizes);
-                if (colorArr.length === 0 || sizeArr.length === 0) { $('#noVariantsNote').show(); return; }
+                if (colorArr.length === 0 || sizeArr.length === 0) { $('#noVariantsNote').show(); return; }// Hiện ghi chú
                 $('#noVariantsNote').hide();
                 let idx = 0;
                 colorArr.forEach(c => sizeArr.forEach(s => {
