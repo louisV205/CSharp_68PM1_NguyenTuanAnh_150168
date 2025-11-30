@@ -33,24 +33,59 @@ namespace GG_Shop_v3.Controllers
         }
 
         // Lấy sản phẩm
-        
-        public JsonResult GetProducts()
+
+        public JsonResult GetProducts(int? categoryId, int? minPrice, int? maxPrice, string size)
         {
-            var products = db.products
-                             
-                             .Include(p => p.Product_Sku)
-                             .Include(p => p.Product_Images)
-                             
-                             .ToList()
-                             .Select(p => new
-                             {
-                                 p.Id,
-                                 p.Title,
-                                 Price = p.Product_Sku.FirstOrDefault() != null ? p.Product_Sku.FirstOrDefault().Price : 0,
-                                 ImageUrl = p.Product_Images.FirstOrDefault(img => img.Is_Main) != null ? Url.Content(p.Product_Images.FirstOrDefault(img => img.Is_Main).Image_Url) : "/images/default.png"
-                             }).ToList();
+            var query = db.products
+                          .Include(p => p.Category)
+                          .Include(p => p.Product_Sku)
+                          .Include(p => p.Product_Images)
+                          .Where(p => p.Status == "active");
+
+            // ============================
+            // FILTER CATEGORY
+            // ============================
+            if (categoryId != null)
+            {
+                query = query.Where(p => p.Category_Id == categoryId);
+            }
+
+            // ============================
+            // FILTER PRICE RANGE
+            // ============================
+            if (minPrice != null && maxPrice != null)
+            {
+                query = query.Where(p => p.Product_Sku.Any(s =>
+                    s.Price >= minPrice && s.Price <= maxPrice
+                ));
+            }
+
+            // ============================
+            // FILTER SIZE
+            // ============================
+            if (!string.IsNullOrEmpty(size))
+            {
+                query = query.Where(p => p.Product_Sku.Any(s => s.Size == size));
+            }
+
+            var products = query.ToList()
+                                .Select(p => new
+                                {
+                                    p.Id,
+                                    p.Title,
+
+                                    Price = p.Product_Sku.FirstOrDefault() != null
+                                            ? p.Product_Sku.FirstOrDefault().Price
+                                            : 0,
+
+                                    ImageUrl = p.Product_Images.FirstOrDefault(img => img.Is_Main) != null
+                                            ? Url.Content(p.Product_Images.FirstOrDefault(img => img.Is_Main).Image_Url)
+                                            : "/images/default.png"
+                                }).ToList();
+
             return Json(products, JsonRequestBehavior.AllowGet);
         }
+
 
 
         // Lấy sản phẩm theo filter
