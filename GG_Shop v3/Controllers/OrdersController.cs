@@ -23,7 +23,7 @@ namespace GG_Shop_v3.Controllers
             decimal DoanhThu = db.orders.Sum(o => o.Total_Amount);
             ViewBag.DoanhThu = DoanhThu;
 
-            int TongSanPham = db.order_items.Count();
+            int TongSanPham = db.order_items.Sum(o => o.Quantity);
             ViewBag.TongSanPham = TongSanPham;
             return View(orders.ToList());
         }

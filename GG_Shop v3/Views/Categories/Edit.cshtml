@@ -1,5 +1,4 @@
 ﻿@model GG_Shop_v3.Models.Category
-
 @{
     ViewBag.Title = "Edit";
     Layout = "~/Views/Shared/_Layout_admin.cshtml";
@@ -10,7 +9,6 @@
         <h3>Chỉnh sửa danh mục</h3>
 
         <form id="editCategoryForm">
-            @Html.AntiForgeryToken()
             @Html.HiddenFor(model => model.Id)
 
             <div class="form-horizontal">
@@ -43,36 +41,48 @@
 
 @section Scripts {
     @Scripts.Render("~/bundles/jqueryval")
+
     <script>
-    $(document).ready(function() {
-        $('#editCategoryForm').submit(function(e) {
-            e.preventDefault();
-            $('.field-validation-error').text(''); 
+        $(document).ready(function () {
+            $('#editCategoryForm').submit(function (e) {
+                e.preventDefault();
 
-            var formData = $(this).serialize();
+                // Xóa thông báo lỗi cũ
+                $('.field-validation-error').text('');
 
-            $.ajax({
-                url: '@Url.Action("UpdateCategory","Categories")',
-                type: 'POST',
-                data: formData,
-                success: function(result) {
-                    if(result.success) {
-                        alert(result.message);
-                        window.location.href = '@Url.Action("Index","Categories")'; 
-                    } else {
-                        alert(result.message || 'Có lỗi xảy ra');
-                        if(result.errors) {
-                            $.each(result.errors, function(i, err) {
-                                $('.field-validation-error').eq(i).text(err);
-                            });
-                        }
-                    }
-                },
-                error: function(xhr) {
-                    alert("Lỗi server: " + xhr.responseText);
+                // Kiểm tra validation client-side (nếu có jquery.validate)
+                if (!$(this).valid()) {
+                    return;
                 }
+
+                var formData = $(this).serialize();
+
+                $.ajax({
+                    url: '@Url.Action("UpdateCategory", "Categories")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (result) {
+                        if (result && result.success) {
+                            alert(result.message || 'Cập nhật thành công!');
+                            window.location.href = '@Url.Action("Index", "Categories")';
+                        } else {
+                            alert(result.message || 'Có lỗi xảy ra');
+
+                            // Nếu server trả về danh sách lỗi chi tiết
+                            if (result && result.errors && result.errors.length > 0) {
+                                $('.field-validation-error').eq(0).text(result.errors[0]); // Name
+                                if (result.errors.length > 1) {
+                                    $('.field-validation-error').eq(1).text(result.errors[1]); // Description
+                                }
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        console.log(xhr.responseText);
+                        alert("Lỗi server. Vui lòng kiểm tra console để biết chi tiết.");
+                    }
+                });
             });
         });
-    });
     </script>
 }
