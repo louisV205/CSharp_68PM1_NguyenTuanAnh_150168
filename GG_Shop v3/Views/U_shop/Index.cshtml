@@ -2,6 +2,12 @@
     ViewBag.Title = "Shop";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+<style>
+    .active-filter {
+        color: #ff4e00 !important;
+        font-weight: bold;
+    }
+</style>
 
 
 
@@ -13,6 +19,8 @@
                     <div class="shop__sidebar__accordion">
                         <div class="accordion" id="accordionExample">
                             <div class="card">
+
+
                                 <div class="card-heading">
                                     <a data-toggle="collapse" data-target="#collapseOne">Danh mục sản phẩm</a>
                                 </div>
@@ -34,12 +42,12 @@
                                 <div id="collapseTwo" class="collapse show" data-parent="#accordionExample">
                                     <div class="card-body">
                                         <ul>
-                                            <li><a href="#">0k - 200k</a></li>
-                                            <li><a href="#">200k - 500k</a></li>
-                                            <li><a href="#">500k - 1,000k</a></li>
-                                            <li><a href="#">1,000k+</a></li>
-                                            
+                                            <li><a href="#" class="price-item" data-min="0" data-max="200000">0k - 200k</a></li>
+                                            <li><a href="#" class="price-item" data-min="200000" data-max="500000">200k - 500k</a></li>
+                                            <li><a href="#" class="price-item" data-min="500000" data-max="1000000">500k - 1,000k</a></li>
+                                            <li><a href="#" class="price-item" data-min="1000000" data-max="99999999">1,000k+</a></li>
                                         </ul>
+
                                     </div>
                                 </div>
                             </div>
@@ -50,15 +58,16 @@
                                 </div>
                                 <div id="collapseThree" class="collapse show" data-parent="#accordionExample">
                                     <div class="card-body">
-                                        <label>XS <input type="radio" name="size"></label>
-                                        <label>S <input type="radio" name="size"></label>
-                                        <label>M <input type="radio" name="size"></label>                                        
-                                        <label>XL <input type="radio" name="size"></label>
-                                        <label>XXL <input type="radio" name="size"></label>
+                                        <label>XS <input type="radio" name="size" value="XS"></label>
+                                        <label>S <input type="radio" name="size" value="S"></label>
+                                        <label>M <input type="radio" name="size" value="M"></label>
+                                        <label>XL <input type="radio" name="size" value="XL"></label>
+                                        <label>XXL <input type="radio" name="size" value="XXL"></label>
 
                                     </div>
                                 </div>
                             </div>
+                            <button id="resetFilter" class="btn btn-secondary">Tất cả sản phẩm</button>
                         </div>
                     </div>
                 </div>
@@ -77,36 +86,81 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
 $(document).ready(function(){
-    // Load Categories
     $.getJSON('@Url.Action("GetCategories", "U_shop")', function(categories){
         $('#categoryList').empty();
         $.each(categories, function(i, c){
-            $('#categoryList').append('<li><a href="#">' + c.Name + '</a></li>');
+            $('#categoryList').append(`<li><a href="#" class="category-item" data-id="${c.Id}">${c.Name}</a></li>`);
         });
     });
 
-    // Load Products
-    $.getJSON('@Url.Action("GetProducts", "U_shop")', function(products){
-        $('#productList').empty();
-        $.each(products, function(i, p){
-            var productHtml = `
-                <div class="col-lg-4 col-md-6 col-sm-6">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" style="background-image:url('${p.ImageUrl}')">
-                            
+    loadProducts();
+
+    function loadProducts(filters = {}) {
+    $.ajax({
+        url: '@Url.Action("GetProducts", "U_shop")',
+        data: filters,
+        success: function (products) {
+
+            $('#productList').empty();
+
+            $.each(products, function (i, p) {
+                var html = `
+                    <div class="col-lg-4 col-md-6 col-sm-6">
+                        <div class="product__item">
+                            <div class="product__item__pic set-bg" style="background-image:url('${p.ImageUrl}')"></div>
+                            <div class="product__item__text">
+                                <h6>${p.Title}</h6>
+                                <a href="#" class="add-cart">+ Add To Cart</a>
+                                <h5>${p.Price}đ</h5>
+                            </div>
                         </div>
-                        <div class="product__item__text">
-                            <h6>${p.Title}</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <h5>${p.Price}đ</h5>
-                        </div>
-                    </div>
-                </div>`;
-            $('#productList').append(productHtml);
-        });
+                    </div>`;
+                $('#productList').append(html);
+            });
+
+        }
     });
+}
+
+
+    $(document).on("click", ".category-item", function(e){
+        e.preventDefault();
+        let categoryId = $(this).data("id");
+        $(".category-item").removeClass("active-filter");
+
+        $(this).addClass("active-filter");
+        loadProducts({ categoryId: categoryId });
+    });
+
+    $(document).on("click", ".price-item", function(e){
+        e.preventDefault();
+        $(".price-item").removeClass("active-filter");
+        $(this).addClass("active-filter");
+        let min = $(this).data("min");
+        let max = $(this).data("max");
+
+        loadProducts({ minPrice: min, maxPrice: max });
+    });
+
+    $('input[name="size"]').change(function () {
+        let selectedSize = $(this).val();
+
+        $('input[name="size"]').parent().removeClass("active-filter");
+
+        $(this).parent().addClass("active-filter");
+
+        loadProducts({ size: selectedSize });
+    });
+    $(document).on("click", "#resetFilter", function () {
+
+        $(".active-filter").removeClass("active-filter");
+
+        loadProducts();
+    });
+
 });
     </script>
+
 }
 
 
