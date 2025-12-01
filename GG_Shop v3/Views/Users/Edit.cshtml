@@ -14,6 +14,7 @@
                 <input type="number" name="Total_Spent" id="txtTotal_Spent" class="form-control" hidden />
                 <input type="text" name="Rank" id="txtRank" class="form-control" hidden />
                 <input type="number" name="Orders" id="txtOrders" class="form-control" hidden />
+                <input type="text" name="Status" id="txtStatus" class="form-control" hidden />
 
 
                 <div class="form-group">
@@ -111,6 +112,7 @@ $(document).ready(function() {
             $('#txtRank').val(res.Rank);
             $('#txtTotal_Spent').val(res.Total_Spent);
             $('#txtOrders').val(res.Orders);
+            $('#txtStatus').val(res.Status);
         },
         error: function() {
             alert('Lỗi khi lấy dữ liệu người dùng');

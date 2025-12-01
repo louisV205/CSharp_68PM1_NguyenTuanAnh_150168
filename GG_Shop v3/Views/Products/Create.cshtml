@@ -1,131 +1,231 @@
-﻿@model GG_Shop_v3.Models.Product
-
-@{
+﻿@{
     ViewBag.Title = "Create Product";
     Layout = "~/Views/Shared/_Layout_admin.cshtml";
 }
 
-<link href="@Url.Content("~/Content/css_admin/CreateProduct_css.css")" rel="stylesheet" />
-
 <div class="content-page">
     <div class="container-fluid add-form-list">
         <div class="row">
-            <div class="col-12 col-lg-10">
-                @using (Html.BeginForm("Create", "Products", FormMethod.Post, new { enctype = "multipart/form-data" }))
-                {
-                    @Html.AntiForgeryToken()
-
-                    <!-- HIỂN THỊ LỖI TỔNG HỢP -->
-                    @Html.ValidationSummary(true, "", new { @class = "text-danger mb-2" })
-
-                    <div class="form-row">
-
-                        <div class="form-group col-md-6">
-                            @Html.LabelFor(m => m.Title, "Tên sản phẩm *")
-                            @Html.TextBoxFor(m => m.Title, new { @class = "form-control", placeholder = "Nhập tên", required = "required" })
-
-                            <!-- HIỂN THỊ LỖI RIÊNG CHO TITLE -->
-                            @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger" })
-                        </div>
-
-                        <div class="form-group col-md-6">
-                            @Html.LabelFor(m => m.Category_Id, "Danh mục sản phẩm *")
-                            @Html.DropDownListFor(
-                                 m => m.Category_Id,
-                                 (SelectList)ViewBag.Category_Id,
-                                 "Chọn danh mục",
-                                 new { @class = "form-control" }
- )
-                            @Html.ValidationMessageFor(m => m.Category_Id, "", new { @class = "text-danger" })
-
-                        </div>
-
-                        <!-- ===== status selector ===== -->
-                        <div class="form-group col-md-6">
-                            @Html.LabelFor(m => m.Status, "Trạng thái")
-                            @Html.DropDownListFor(
-                                m => m.Status,
-                                new SelectList(new[]
-                                {
-                                    new { Value = "Đang bán", Text = "Đang bán" },
-                                    new { Value = "Chưa bán", Text = "Chưa bán" }
-                                }, "Value", "Text", Model?.Status),
-                                "Chọn trạng thái",
-                                new { @class = "form-control" }
-                            )
-                        </div>
-                        <!-- ============================ -->
-
-                        <div class="form-group col-md-12">
-                            @Html.LabelFor(m => m.Description, "Mô tả")
-                            @Html.TextAreaFor(m => m.Description, 4, 80, new { @class = "form-control" })
-                        </div>
-
-                        <div class="form-group col-md-12">
-                            <label>Ảnh (chọn nhiều)</label>
-                            <input type="file" name="images" accept="image/*" multiple class="form-control" />
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <div class="header-title">
+                            <h4 class="card-title">Thêm sản phẩm</h4>
                         </div>
                     </div>
 
-                    <hr />
+                    <div class="card-body">
+                        <form id="createProductForm" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
 
-                    <!-- Tag inputs for Colors and Sizes -->
-                    <div class="form-row">
-                        <div class="form-group col-md-6" style="position:relative;">
-                            <label>Màu sắc</label>
-                            <div id="colorsInput" class="tag-input" tabindex="0">
-                                <input id="colorsText" placeholder="Thêm màu (ví dụ: Đen)" />
+                            <div class="row">
+                                <!-- Tên sản phẩm -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Tên sản phẩm *</label>
+                                        <input type="text" id="Title" name="Title" class="form-control" required placeholder="Nhập tên sản phẩm" />
+                                        <span id="TitleDupError" class="text-danger small d-block mt-1"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Danh mục -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Danh mục *</label>
+                                        <select id="Category_Id" name="Category_Id" class="form-control" required>
+                                            <option value="">-- Chọn danh mục --</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Trạng thái -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Trạng thái</label>
+                                        <select id="Status" name="Status" class="form-control">
+                                            <option value="">-- Chọn trạng thái --</option>
+                                            <option value="Đang bán">Đang bán</option>
+                                            <option value="Chưa bán">Chưa bán</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Mô tả -->
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Mô tả</label>
+                                        <textarea id="Description" name="Description" class="form-control" rows="4"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Ảnh -->
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Ảnh (chọn nhiều)</label>
+                                        <input type="file" name="images" accept="image/*" multiple class="form-control" />
+                                    </div>
+                                </div>
                             </div>
-                            <div id="colorsSuggestions" class="suggestions" style="display:none;"></div>
-                            <small class="form-text text-muted">Chọn loại màu và nhấn Enter.  Có thể thêm nhiều.</small>
-                        </div>
 
-                        <div class="form-group col-md-6" style="position:relative;">
-                            <label>Kích cỡ</label>
-                            <div id="sizesInput" class="tag-input" tabindex="0">
-                                <input id="sizesText" placeholder="Thêm kích cỡ (ví dụ: M/L)" />
+                            <hr />
+                            <h5 class="mb-3 mt-4">Thuộc tính sản phẩm</h5>
+                            <div class="row">
+                                <!-- Màu sắc -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Màu sắc</label>
+                                        <div class="form-control d-flex flex-wrap align-items-center" id="colorsInput" style="min-height:45px;">
+                                            <input id="colorsText" class="border-0 flex-grow-1" placeholder="Thêm màu (ví dụ: Đen)" />
+                                        </div>
+                                        <small class="form-text text-muted">Nhấn Enter để thêm nhiều màu.</small>
+                                    </div>
+                                </div>
+
+                                <!-- Kích cỡ -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Kích cỡ</label>
+                                        <div class="form-control d-flex flex-wrap align-items-center" id="sizesInput" style="min-height:45px;">
+                                            <input id="sizesText" class="border-0 flex-grow-1" placeholder="Thêm kích cỡ (ví dụ: M)" />
+                                        </div>
+                                        <small class="form-text text-muted">Nhấn Enter để thêm nhiều kích cỡ.</small>
+                                    </div>
+                                </div>
                             </div>
-                            <div id="sizesSuggestions" class="suggestions" style="display:none;"></div>
-                            <small class="form-text text-muted">Chọn loại kích cỡ và nhấn Enter.  Có thể thêm nhiều.</small>
-                        </div>
-                    </div>
 
-                    <!-- variants table -->
-                    <div class="form-group">
-                        <h5>Danh sách sản phẩm</h5>
-
-                        <div id="variantsWrapper">
-                            <table id="variantsTable" class="table table-sm table-bordered variant-table">
-                                <thead>
-                                    <tr>
-                                        <th>Màu sắc</th>
-                                        <th>Kích cỡ</th>
-                                        <th>Mã sản phẩm</th>
-                                        <th>Số lượng</th>
-                                        <th>Giá (VNĐ)</th>
-                                        <th>Xóa</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- rows generated by JS -->
-                                </tbody>
-                            </table>
-                            <div id="noVariantsNote" class="text-muted">
-                                Thêm ít nhất 1 loại màu và 1 loại kích cỡ để tạo sản phẩm.
+                            <hr />
+                            <h5 class="mb-3 mt-4">Danh sách biến thể (SKU)</h5>
+                            <div id="variantsWrapper">
+                                <table id="variantsTable" class="table table-sm table-bordered">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Màu sắc</th>
+                                            <th>Kích cỡ</th>
+                                            <th>Mã sản phẩm</th>
+                                            <th>Số lượng</th>
+                                            <th>Giá (VNĐ)</th>
+                                            <th>Xóa</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                                <div id="noVariantsNote" class="text-muted">
+                                    Thêm ít nhất 1 màu và 1 kích cỡ để tạo sản phẩm.
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <div class="form-group mt-3">
-                        <input type="submit" value="Thêm Sản phẩm" class="btn btn-primary" />
-                        <a class="btn btn-secondary" href="@Url.Action("Index", "Products")">Quay Lại</a>
+                            <div class="text-center mt-4">
+                                <button type="button" id="saveProductBtn" class="btn btn-primary mr-2">Lưu sản phẩm</button>
+                                <button type="button" id="btnBack" class="btn btn-secondary">Hủy</button>
+                            </div>
+                        </form>
                     </div>
-                }
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-@section scripts {
-    <script src="@Url.Content("~/Scripts/js_admin/CreateProduct_js.js")"></script>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const token = $('input[name="__RequestVerificationToken"]').val();
+            const colors = new Set();
+            const sizes = new Set();
+
+            // Load danh mục
+            $.get('/Products/GetCategories', function (data) {
+                let html = '<option value="">-- Chọn danh mục --</option>';
+                data.forEach(c => html += `<option value="${c.Id}">${c.Name}</option>`);
+                $('#Category_Id').html(html);
+            });
+
+            // Kiểm tra trùng tên
+            $('#Title').on('blur keydown', function (e) {
+                if (e.type === 'blur' || e.key === 'Enter') {
+                    e.preventDefault();
+                    const title = $(this).val().trim();
+                    if (!title) return;
+                    $.get('/Products/CheckTitle', { title }, function (res) {
+                        if (res.exists) {
+                            $('#TitleDupError').text('Tên sản phẩm đã tồn tại.');
+                        } else {
+                            $('#TitleDupError').text('');
+                        }
+                    });
+                }
+            });
+
+            // Thêm tag
+            function addTag(container, set, value) {
+                const v = value.trim();
+                if (!v || set.has(v)) return;
+                set.add(v);
+                const $tag = $(`<span class="badge badge-light text-dark mr-2 mb-2 p-2">${v} <span class="ml-1" style="cursor:pointer;">×</span></span>`);
+                $tag.find('span').on('click', function () { set.delete(v); $tag.remove(); generateVariants(); });
+                $(container).prepend($tag);
+                generateVariants();
+            }
+
+            $('#colorsText').keydown(function (e) { if (e.key === 'Enter') { e.preventDefault(); addTag('#colorsInput', colors, this.value); this.value = ''; } });
+            $('#sizesText').keydown(function (e) { if (e.key === 'Enter') { e.preventDefault(); addTag('#sizesInput', sizes, this.value); this.value = ''; } });
+
+            // Sinh biến thể
+            function generateVariants() {
+                const $tbody = $('#variantsTable tbody').empty();
+                const colorArr = Array.from(colors), sizeArr = Array.from(sizes);
+                if (colorArr.length === 0 || sizeArr.length === 0) { $('#noVariantsNote').show(); return; }
+                $('#noVariantsNote').hide();
+                let idx = 0;
+                colorArr.forEach(c => sizeArr.forEach(s => {
+                    $tbody.append(`
+                    <tr>
+                        <td><input type="text" class="form-control" name="skus[${idx}].Color" value="${c}" /></td>
+                        <td><input type="text" class="form-control" name="skus[${idx}].Size" value="${s}" /></td>
+                        <td><input type="text" class="form-control" name="skus[${idx}].Sku" /></td>
+                        <td><input type="number" class="form-control" name="skus[${idx}].Quantity" value="0" /></td>
+                        <td><input type="number" class="form-control" name="skus[${idx}].Price" value="0" /></td>
+                        <td class="text-center"><button type="button" class="btn btn-sm btn-danger remove-row">×</button></td>
+                    </tr>`);
+                    idx++;
+                }));
+            }
+            $(document).on('click', '.remove-row', function () { $(this).closest('tr').remove(); });
+
+            // Lưu sản phẩm (AJAX)
+            $('#saveProductBtn').click(function () {
+                if ($('#TitleDupError').text()) { alert('Tên sản phẩm đã tồn tại.'); return; }
+
+                const fd = new FormData($('#createProductForm')[0]);
+                fd.append('Colors', JSON.stringify(Array.from(colors)));
+                fd.append('Sizes', JSON.stringify(Array.from(sizes)));
+                fd.append('__RequestVerificationToken', token);
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("CreateAjax", "Products")',
+                    data: fd,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        if (res.success) {
+                            alert('Thêm sản phẩm thành công!');
+                            // Redirect về trang danh sách sản phẩm
+                            window.location.href = res.redirectUrl || '/Products/Index';
+                        } else {
+                            alert(res.message || 'Có lỗi khi thêm sản phẩm');
+                        }
+                    },
+                    error: function (xhr) {
+                        alert('Lỗi hệ thống khi thêm sản phẩm: ' + xhr.statusText);
+                    }
+                });
+            });
+
+    // Nút quay lại
+    $('#btnBack').click(function(){
+        window.location.href = '/Products/Index';
+    });
+});
+    </script>
 }

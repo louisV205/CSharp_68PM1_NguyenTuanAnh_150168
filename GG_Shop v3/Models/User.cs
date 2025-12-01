@@ -50,7 +50,7 @@ namespace GG_Shop_v3.Models
         }
 
         // Constructor để khởi tạo User
-        public User(string username, string email, string password, string full_name, string phone_number, string country, int orders, string rank, double total_spent, string role)
+        public User(string username, string email, string password, string full_name, string phone_number, string country, int orders, string rank, double total_spent, string role, string Status)
         {
             this.Username = username;
             this.Email = email;
@@ -62,6 +62,7 @@ namespace GG_Shop_v3.Models
             this.Rank = rank;
             this.Total_Spent = total_spent;
             this.Role = role;
+            this.Status = Status;
 
             // Khởi tạo các Collection
         }

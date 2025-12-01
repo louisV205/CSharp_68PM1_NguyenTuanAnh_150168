@@ -24,8 +24,9 @@ namespace GG_Shop_v3.Models
         [MaxLength(20)]
         public string Status { get; set; }
         public virtual Category Category { get; set; }
-        public virtual ICollection<Product_Sku> Product_Skus { get; set; }
+        public virtual ICollection<Product_Sku> Product_Sku { get; set; }
         public virtual ICollection<Product_Image> Product_Images { get; set; }
+        public object Product_Image { get; internal set; }
     }
 }
 

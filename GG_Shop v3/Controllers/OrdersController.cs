@@ -16,6 +16,15 @@ namespace GG_Shop_v3.Controllers
         public ActionResult Index()
         {
             var orders = db.orders.Include(o => o.Promotion).Include(o => o.User);
+            int totalSales = db.orders.Count();
+
+            ViewBag.TotalSales = totalSales;
+
+            decimal DoanhThu = db.orders.Sum(o => o.Total_Amount);
+            ViewBag.DoanhThu = DoanhThu;
+
+            int TongSanPham = db.order_items.Count();
+            ViewBag.TongSanPham = TongSanPham;
             return View(orders.ToList());
         }
        
@@ -58,28 +67,7 @@ namespace GG_Shop_v3.Controllers
             if (order == null)
                 return HttpNotFound();
 
-            // 🟢 Tính số tiền giảm (discount) mà KHÔNG thêm thuộc tính vào model
-            decimal discount = 0;
-
-            if (order.Promo_Id.HasValue && order.Promotion != null)
-            {
-                var item = order.Order_Items;
-                var promo = order.Promotion;
-                var total = item.Sum(i => i.Price * i.Quantity);
-                bool validDate = order.Created_At >= promo.Start_Date && order.Created_At <= promo.End_Date;
-                bool validMinValue = promo.Min_Order_Value == null || order.Total_Amount >= promo.Min_Order_Value;
-                bool validStatus = promo.Status != null && promo.Status.ToLower() == "active";
-
-                if (validDate && validMinValue && validStatus)
-                {
-                    if (promo.Discount_Percentage.HasValue)
-                        discount = total * (promo.Discount_Percentage.Value / 100);
-                    else if (promo.Discount_Amount.HasValue)
-                        discount = promo.Discount_Amount.Value;
-                }
-            }
-
-            ViewBag.Discount = discount;
+            
 
             return View(order);
         }
@@ -107,19 +95,7 @@ namespace GG_Shop_v3.Controllers
         }
         public ActionResult Create()
         {
-            ViewBag.User_Id = new SelectList(db.users, "Id", "Username");
-            ViewBag.Promo_Id = new SelectList(db.promotions, "Id", "Promo_Code");
-            ViewBag.SkuList = new SelectList(db.product_skus.Include(p => p.Product), "Id", "Sku");
-
-            // Danh sách trạng thái đơn hàng
-            ViewBag.StatusList = new SelectList(new[]
-            {
-                new { Value = "Đang xử lí", Text = "Đang xử lí" },
-                new { Value = "Đã giao", Text = "Đã giao" },
-                new { Value = "Hoàn thành", Text = "Hoàn thành" },
-                new { Value = "Đã trả", Text = "Đã trả" },
-                new { Value = "Đã hủy", Text = "Đã hủy" }
-            }, "Value", "Text");
+            
 
             Session["TempOrderItems"] = new List<Order_Item>();
             return View(new Order());
@@ -242,148 +218,175 @@ namespace GG_Shop_v3.Controllers
         // GET: Orders/Edit/5
 
         
-        [HttpPost]
+//        [HttpPost]
      
-        public JsonResult GetOrderDetails(int id)
-        {
-            var order = db.orders
-                .Include(o => o.User)
-                .Include(o => o.Promotion)
-                .Include(o => o.Order_Items.Select(i => i.Product_Sku.Product))
-                .FirstOrDefault(o => o.Id == id);
+//        public JsonResult GetOrderDetails(int id)
+//        {
+//            var order = db.orders
+//                .Include(o => o.User)
+//                .Include(o => o.Promotion)
+//                .Include(o => o.Order_Items.Select(i => i.Product_Sku.Product))
+//                .FirstOrDefault(o => o.Id == id);
 
-            if (order == null)
-                return Json(null);
+//            if (order == null)
+//                return Json(null);
 
-            // Tính số tiền giảm
-            decimal discount = 0;
-            if (order.Promo_Id.HasValue && order.Promotion != null)
-            {
-                var promo = order.Promotion;
-                var total = order.Order_Items.Sum(i => i.Price * i.Quantity);
-                bool validDate = order.Created_At >= promo.Start_Date && order.Created_At <= promo.End_Date;
-                bool validMinValue = promo.Min_Order_Value == null || order.Total_Amount >= promo.Min_Order_Value;
-                bool validStatus = promo.Status != null && promo.Status.ToLower() == "active";
+//            // Tính số tiền giảm theo promotion hiện tại
+//            decimal discount = 0;
+//            if (order.Promo_Id.HasValue && order.Promotion != null)
+//            {
+//                var promo = order.Promotion;
+//                var total = order.Order_Items.Sum(i => i.Price * i.Quantity); // Tổng tiền thật từ sản phẩm
 
-                if (validDate && validMinValue && validStatus)
-                {
-                    if (promo.Discount_Percentage.HasValue)
-                        discount = total * (promo.Discount_Percentage.Value / 100);
-                    else if (promo.Discount_Amount.HasValue)
-                        discount = promo.Discount_Amount.Value;
-                }
-            }
+//                // So sánh ngày bỏ giờ
+//                bool validDate = order.Created_At.Date >= promo.Start_Date.Date && order.Created_At.Date <= promo.End_Date.Date;
+//                bool validMinValue = promo.Min_Order_Value == null || total >= promo.Min_Order_Value;
+//                bool validStatus = promo.Status != null && promo.Status.Trim().ToLower() == "active";
 
-            return Json(new
-            {
-                order.Id,
-                User_Id = order.User_Id,
-                UserName = order.User.Username,
-                order.Status,
-                order.Total_Amount,
-                order.Shipping_Address,
-                Created_At = order.Created_At.ToString("yyyy-MM-dd"),// cho input type=date
-                Promo_Id = order.Promo_Id,
-                PromoCode = order.Promotion != null ? order.Promotion.Promo_Code : null,
-                Discount = discount,
-                Items = order.Order_Items.Select(i => new
-                {
-                    Product = i.Product_Sku.Product.Title,
-                    i.Product_Sku.Color,
-                    i.Product_Sku.Size,
-                    i.Quantity,
-                    i.Price,
-                    Total = i.Price * i.Quantity
-                })
-            }); 
+//                if (validDate && validMinValue && validStatus)
+//                {
+//                    if (promo.Discount_Percentage.HasValue)
+//                        discount = total * (promo.Discount_Percentage.Value / 100m);
+//                    else if (promo.Discount_Amount.HasValue)
+//                        discount = promo.Discount_Amount.Value;
 
-        }
+//                    if (discount > total) discount = total; // không âm
+//                }
+//            }
 
-        [HttpGet]
-        public JsonResult GetAllPromotions()
-        {
-            var promos = db.promotions
-                .Select(p => new { p.Id, p.Promo_Code })
-                .ToList();
 
-            return Json(promos, JsonRequestBehavior.AllowGet);
-        }
 
-        [HttpGet]
-        public JsonResult GetAllUsers()
-        {
-            var users = db.users
-                .Where(u => u.Status == "Hoạt Động")
-                .Select(u => new { u.Id, u.Username })
-                .ToList();
+//            return Json(new
+//            {
+//                order.Id,
+//                User_Id = order.User_Id,
+//                UserName = order.User.Username,
+//                order.Status,
+//                order.Total_Amount,
+//                order.Shipping_Address,
+//                Created_At = order.Created_At.ToString("yyyy-MM-dd"),// cho input type=date
+//                Promo_Id = order.Promo_Id,
+//                PromoCode = order.Promotion != null ? order.Promotion.Promo_Code : null,
+//                Discount = discount,
+//                Items = order.Order_Items.Select(i => new
+//                {
+//                    Product = i.Product_Sku.Product.Title,
+//                    i.Product_Sku.Color,
+//                    i.Product_Sku.Size,
+//                    i.Quantity,
+//                    i.Price,
+//                    Total = i.Price * i.Quantity
+//                })
+//            }); 
 
-            return Json(users, JsonRequestBehavior.AllowGet);
-        }
+//        }
 
-        [HttpPost]
-        public JsonResult UpdateOrder(Order model)
-        {
-            if (!ModelState.IsValid)
-                return Json("Dữ liệu không hợp lệ");
+//        [HttpGet]
+//        public JsonResult GetAllPromotions()
+//        {
+//            var promos = db.promotions
+//                .Select(p => new { p.Id, p.Promo_Code })
+//                .ToList();
 
-            var existingOrder = db.orders
-                .Include(o => o.Order_Items)
-                .FirstOrDefault(o => o.Id == model.Id);
+//            return Json(promos, JsonRequestBehavior.AllowGet);
+//        }
 
-            if (existingOrder == null)
-                return Json("Không tìm thấy đơn hàng");
+//        [HttpGet]
+//        public JsonResult GetAllUsers()
+//        {
+//            var users = db.users
+//                .Where(u => u.Status == "Hoạt Động")
+//                .Select(u => new { u.Id, u.Username })
+//                .ToList();
 
-            existingOrder.User_Id = model.User_Id;
-            existingOrder.Status = model.Status;
-            existingOrder.Shipping_Address = model.Shipping_Address;
-            existingOrder.Promo_Id = model.Promo_Id;
-            existingOrder.Created_At = model.Created_At;
+//            return Json(users, JsonRequestBehavior.AllowGet);
+//        }
 
-            // Tính lại tổng
-            var total = existingOrder.Order_Items.Sum(i => i.Price * i.Quantity);
 
-            // Áp dụng khuyến mãi nếu có
-            if (model.Promo_Id.HasValue)
-            {
-                var promo = db.promotions.Find(model.Promo_Id);
-                if (promo != null
-                    && total >= (promo.Min_Order_Value ?? 0)
-                    && model.Created_At >= promo.Start_Date
-                    && model.Created_At <= promo.End_Date)
-                {
-                    if (promo.Discount_Percentage.HasValue)
-                        total -= total * promo.Discount_Percentage.Value / 100;
-                    else if (promo.Discount_Amount.HasValue)
-                        total -= promo.Discount_Amount.Value;
-                }
-            }
+//        [HttpPost]
+//        public JsonResult UpdateOrder(int Id,int User_Id,string Shipping_Address,string Status,int? Promo_Id,DateTime Created_At
+//)
+//        {
+//            try
+//            {
+//                var existingOrder = db.orders
+//                    .Include(o => o.Order_Items)
+//                    .FirstOrDefault(o => o.Id == Id);
 
-            existingOrder.Total_Amount = total;
-            db.SaveChanges();
+//                if (existingOrder == null)
+//                    return Json(new { success = false, message = "Không tìm thấy đơn hàng" });
 
-            return Json("Cập nhật thành công");
-        }
+//                // Cập nhật thông tin cơ bản
+//                existingOrder.User_Id = User_Id;
+//                existingOrder.Shipping_Address = Shipping_Address;
+//                existingOrder.Status = Status;
+//                existingOrder.Promo_Id = Promo_Id;
+//                existingOrder.Created_At = Created_At;
 
-        public ActionResult Edit(int? id)
-        {
-            if (id == null)
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+//                // Tính tổng tiền từ Order_Items
+//                decimal total = existingOrder.Order_Items.Sum(i => i.Price * i.Quantity);
 
-            Order order = db.orders.Find(id);
-            if (order == null)
-                return HttpNotFound();
+//                // Áp dụng promotion nếu có
+//                if (Promo_Id.HasValue)
+//                {
+//                    var promo = db.promotions.Find(Promo_Id.Value);
+//                    if (promo != null)
+//                    {
+//                        // So sánh ngày chỉ tính Date, bỏ giờ
+//                        var orderDate = Created_At.Date;
+//                        bool validDate = orderDate >= promo.Start_Date.Date && orderDate <= promo.End_Date.Date;
+//                        bool validMin = promo.Min_Order_Value == null || total >= promo.Min_Order_Value;
+//                        bool validStatus = promo.Status != null && promo.Status.Trim().ToLower() == "active";
 
-            var promos = db.promotions
-                .Select(p => new { Id = (int?)p.Id, p.Promo_Code })
-                .ToList();
+//                        if (validDate && validMin && validStatus)
+//                        {
+//                            decimal discount = promo.Discount_Percentage.HasValue
+//                                ? total * promo.Discount_Percentage.Value / 100m
+//                                : promo.Discount_Amount ?? 0;
 
-            promos.Insert(0, new { Id = (int?)null, Promo_Code = "(Không áp dụng khuyến mãi)" });
+//                            if (discount > total)
+//                                discount = total;
 
-            ViewBag.Promo_Id = new SelectList(promos, "Id", "Promo_Code", order.Promo_Id);
-            ViewBag.User_Id = new SelectList(db.users, "Id", "Username", order.User_Id);
+//                            total -= discount;
 
-            return View(order);
-        }
+//                            promo.Uses_Count += 1;
+//                            db.Entry(promo).State = System.Data.Entity.EntityState.Modified;
+//                        }
+//                        else
+//                        {
+//                            // Nếu promo không hợp lệ thì bỏ
+//                            existingOrder.Promo_Id = null;
+//                        }
+//                    }
+//                }
+
+//                existingOrder.Total_Amount = total;
+//                db.SaveChanges();
+
+//                return Json(new { success = true, message = "Cập nhật thành công" });
+//            }
+//            catch (Exception ex)
+//            {
+//                return Json(new { success = false, message = ex.Message });
+//            }
+//        }
+
+
+
+
+//        public ActionResult Edit(int? id)
+//        {
+//            if (id == null)
+//                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+
+//            Order order = db.orders.Find(id);
+//            if (order == null)
+//                return HttpNotFound();
+
+            
+
+//            return View(order);
+//        }
 
         
 
@@ -403,28 +406,7 @@ namespace GG_Shop_v3.Controllers
             if (order == null)
                 return HttpNotFound();
 
-            // Trả dữ liệu JSON cho AJAX
-            var json = new
-            {
-                Id = order.Id,
-                UserName = order.User.Username,
-                PromoCode = order.Promotion != null ? order.Promotion.Promo_Code : null,
-                Total_Amount = order.Total_Amount,
-                Status = order.Status,
-                Shipping_Address = order.Shipping_Address,
-                Created_At = order.Created_At.ToString("dd/MM/yyyy HH:mm"),
-                Items = order.Order_Items.Select(oi => new
-                {
-                    Product = oi.Product_Sku.Product.Title,
-                    Color = oi.Product_Sku.Color,
-                    Size = oi.Product_Sku.Size,
-                    Quantity = oi.Quantity,
-                    Price = oi.Price,
-                    Total = oi.Price * oi.Quantity
-                }).ToList()
-            };
-
-            return Json(json, JsonRequestBehavior.AllowGet);
+            return View();
         }
 
         // POST: Orders/DeleteOrder

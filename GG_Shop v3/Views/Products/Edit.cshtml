@@ -1,98 +1,53 @@
-﻿@model GG_Shop_v3.Models.Product
-@using GG_Shop_v3.Models
-@using System.Linq
-
-@{
+﻿@{
     ViewBag.Title = "Edit Product";
     Layout = "~/Views/Shared/_Layout_admin.cshtml";
-
-    var mainImage = Model.Product_Images?.FirstOrDefault(i => i.Is_Main) ?? Model.Product_Images?.FirstOrDefault();
-    var skus = Model.Product_Skus?.ToList() ?? new List<Product_Sku>();
-    var images = Model.Product_Images?.ToList() ?? new List<Product_Image>();
 }
 
-<div class="content-page">
+<div class="content-page" id="edit-product-page" data-product-id="@ViewBag.Id">
     <div class="container-fluid">
         <div class="row">
-            <!-- LEFT: Thông tin sản phẩm -->
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h4 class="card-title mb-0">Chỉnh sửa sản phẩm</h4>
                     </div>
                     <div class="card-body">
-                        @using (Html.BeginForm("Edit", "Products", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                        @using (Html.BeginForm("Edit", "Products", FormMethod.Post, new { enctype = "multipart/form-data", id = "editProductForm" }))
                         {
                             @Html.AntiForgeryToken()
-                            @Html.HiddenFor(m => m.Id)
+                            <input type="hidden" id="productId" name="Id" value="@ViewBag.Id" />
 
                             <div class="form-group">
                                 <label>Tên sản phẩm</label>
-                                @Html.TextBoxFor(m => m.Title, new { @class = "form-control", placeholder = "Nhập tên sản phẩm" })
+                                <input type="text" id="Title" name="Title" class="form-control" required />
                             </div>
 
                             <div class="form-group">
                                 <label>Danh mục</label>
-                                @Html.DropDownList("Category_Id", null, "Chọn danh mục", new { @class = "form-control" })
+                                <select id="Category_Id" name="Category_Id" class="form-control">
+                                    <option value="">Chọn danh mục</option>
+                                </select>
                             </div>
 
                             <div class="form-group">
                                 <label>Mô tả</label>
-                                @Html.TextAreaFor(m => m.Description, 4, 50, new { @class = "form-control", placeholder = "Nhập mô tả sản phẩm" })
+                                <textarea id="Description" name="Description" rows="4" class="form-control"></textarea>
                             </div>
 
                             <div class="form-group">
                                 <label>Trạng thái</label>
-
-                                @Html.DropDownListFor(
-                                    m => m.Status,
-                                    new SelectList(new[]
-                                    {
-                                        new { Value = "Đang bán", Text = "Đang bán" },
-                                        new { Value = "Chưa bán", Text = "Chưa bán" },
-                                        new { Value = "Đã hết", Text = "Đã hết" }
-                                    }, "Value", "Text", Model?.Status),
-                                    htmlAttributes: new { @class = "form-control", @id = "Status_Id" }
-                                )
+                                <select id="Status" name="Status" class="form-control">
+                                    <option value="">Chọn trạng thái</option>
+                                </select>
                             </div>
 
-                            <!-- IMAGE GALLERY: show all images + radio main + checkbox delete -->
                             <div class="form-group">
                                 <label>Ảnh sản phẩm</label>
-                                <div class="row">
-                                    @if (images.Count == 0)
-                                    {
-                                        <div class="col-12 text-muted">Chưa có ảnh.</div>
-                                    }
-                                    else
-                                    {
-                                        foreach (var img in images)
-                                        {
-                                            <div class="col-3 mb-3">
-                                                <div class="card">
-                                                    <img src="@Url.Content(img.Image_Url)" class="card-img-top" style="height:120px; object-fit:cover;" />
-                                                    <div class="card-body p-2">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input main-radio" type="radio" name="mainImageId" id="main_@img.Id" value="@img.Id" @(img.Is_Main ? "checked" : "") />
-                                                            <label class="form-check-label" for="main_@img.Id">Ảnh đại diện</label>
-                                                        </div>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input delete-checkbox" type="checkbox" name="deleteImages" id="del_@img.Id" value="@img.Id" />
-                                                            <label class="form-check-label text-danger" for="del_@img.Id">Xóa</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        }
-                                    }
-                                </div>
-
+                                <div id="existing-images-row" class="row"></div>
                                 <hr />
-
                                 <label>Upload ảnh mới</label>
                                 <input type="file" name="newImages" id="newImages" accept="image/*" multiple class="form-control" />
-                                <small class="form-text text-muted">Bạn có thể chọn nhiều ảnh. Ảnh đầu upload sẽ không tự động thành main trừ khi bạn chọn.</small>
-
+                                <small class="form-text text-muted">Bạn có thể chọn nhiều ảnh.</small>
                                 <div id="previewNewImages" class="mt-2 d-flex flex-wrap"></div>
                             </div>
 
@@ -109,28 +64,12 @@
                                         <th></th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    @for (int i = 0; i < skus.Count; i++)
-                                    {
-                                        <tr>
-                                            @Html.Hidden($"skus[{i}].Id", skus[i].Id)
-                                            @Html.Hidden($"skus[{i}].Product_Id", Model.Id)
-                                            <td><input type="text" name="skus[@i].Sku" value="@skus[i].Sku" class="form-control" /></td>
-                                            <td><input type="text" name="skus[@i].Color" value="@skus[i].Color" class="form-control" /></td>
-                                            <td><input type="text" name="skus[@i].Size" value="@skus[i].Size" class="form-control" /></td>
-                                            <td><input type="number" name="skus[@i].Quantity" value="@skus[i].Quantity" class="form-control" /></td>
-                                            <td><input type="number" name="skus[@i].Price" value="@skus[i].Price" class="form-control" /></td>
-                                            <td class="text-center">
-                                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
+                                <tbody id="skuBody"></tbody>
                             </table>
                             <button type="button" class="btn btn-outline-primary btn-sm" id="addSku">+ Thêm SKU</button>
 
                             <div class="mt-4">
-                                <input type="submit" value="Lưu thay đổi" class="btn btn-primary" />
+                                <button type="submit" id="btnSave" class="btn btn-primary">Lưu thay đổi</button>
                                 @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary ml-2" })
                             </div>
                         }
@@ -141,110 +80,175 @@
     </div>
 </div>
 
-    @section scripts {
-        <script>
-            // add SKU row
-            document.getElementById('addSku').addEventListener('click', function () {
-                var tbody = document.querySelector('#skuTable tbody');
-                var index = tbody.rows.length;
-                var row = document.createElement('tr');
-                row.innerHTML = `
-                        <td><input type="text" name="skus[${index}].Sku" class="form-control" /></td>
-                        <td><input type="text" name="skus[${index}].Color" class="form-control" /></td>
-                        <td><input type="text" name="skus[${index}].Size" class="form-control" /></td>
-                        <td><input type="number" name="skus[${index}].Quantity" class="form-control" /></td>
-                        <td><input type="number" name="skus[${index}].Price" class="form-control" /></td>
-                        <td class="text-center"><button type="button" class="btn btn-sm btn-danger remove-row">×</button></td>`;
-                tbody.appendChild(row);
-            });
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            const productId = $('#edit-product-page').data('product-id');
 
-            document.addEventListener('click', function (e) {
-                if (e.target.classList.contains('remove-row')) {
-                    e.target.closest('tr').remove();
-                }
-            });
-
-            // preview new images
-            var newImagesInput = document.getElementById('newImages');
-            if (newImagesInput) {
-                newImagesInput.addEventListener('change', function (e) {
-                    var preview = document.getElementById('previewNewImages');
-                    preview.innerHTML = '';
-                    Array.from(this.files).forEach(function (file) {
-                        var fr = new FileReader();
-                        fr.onload = function (evt) {
-                            var div = document.createElement('div');
-                            div.style.margin = '6px';
-                            div.innerHTML = '<img src="' + evt.target.result + '" style="width:120px;height:90px;object-fit:cover;border:1px solid #ddd;padding:2px;" />';
-                            preview.appendChild(div);
-                        };
-                        fr.readAsDataURL(file);
-                    });
+            // Preview ảnh mới
+            $('#newImages').on('change', function () {
+                const preview = $('#previewNewImages').empty();
+                Array.from(this.files).forEach(file => {
+                    const fr = new FileReader();
+                    fr.onload = e => {
+                        preview.append(`<img src="${e.target.result}" style="width:120px;height:90px;object-fit:cover;border:1px solid #ddd;padding:2px;margin:6px;" />`);
+                    };
+                    fr.readAsDataURL(file);
                 });
-            }
+            });
 
-            // Utility
-            function toArray(nodeList) {
-                return Array.prototype.slice.call(nodeList || []);
-            }
+            // Thêm SKU
+            $('#addSku').on('click', function () {
+                const idx = $('#skuBody tr').length;
+                $('#skuBody').append(`
+                    <tr>
+                        <td><input type="text" name="skus[${idx}].Sku" class="form-control" /></td>
+                        <td><input type="text" name="skus[${idx}].Color" class="form-control" /></td>
+                        <td><input type="text" name="skus[${idx}].Size" class="form-control" /></td>
+                        <td><input type="number" name="skus[${idx}].Quantity" class="form-control" /></td>
+                        <td><input type="number" name="skus[${idx}].Price" class="form-control" /></td>
+                        <td class="text-center"><button type="button" class="btn btn-sm btn-danger remove-row">×</button></td>
+                    </tr>
+                `);
+            });
 
-            // find all current cards (dynamic if any)
+            // Xóa SKU
+            $(document).on('click', '.remove-row', function () {
+                $(this).closest('tr').remove();
+            });
+
+            // Đồng bộ ảnh đại diện và xóa
             function wireUpImageControls() {
-                // radio inputs .main-radio
-                var radios = toArray(document.querySelectorAll('.main-radio'));
-                var deletes = toArray(document.querySelectorAll('.delete-checkbox'));
-
-                // when delete checkbox changes
-                deletes.forEach(function (chk) {
-                    // ensure we only attach once: remove existing handlers (safe)
-                    chk.onchange = function () {
-                        var imgId = this.value;
-                        if (this.checked) {
-                            // if checking delete, uncheck its radio (if exists)
-                            var r = document.querySelector('.main-radio[value="' + imgId + '"]');
-                            if (r) r.checked = false;
-                        }
-                        // no auto-check of other radios here; server will ensure a main exists on save
-                    };
+                $('.delete-checkbox').on('change', function () {
+                    if (this.checked) $(`.main-radio[value="${this.value}"]`).prop('checked', false);
                 });
-
-                // when radio changes
-                radios.forEach(function (r) {
-                    r.onchange = function () {
-                        if (this.checked) {
-                            var imgId = this.value;
-                            // uncheck any delete checkbox for same image
-                            var chk = document.querySelector('.delete-checkbox[value="' + imgId + '"]');
-                            if (chk) chk.checked = false;
-
-                            // Optional UX: visually mark this one as main (handled by styles)
-                        }
-                    };
+                $('.main-radio').on('change', function () {
+                    if (this.checked) $(`.delete-checkbox[value="${this.value}"]`).prop('checked', false);
                 });
             }
 
-            // initial wire-up
-            wireUpImageControls();
+            // Trước khi submit
+            function sanitizeBeforeSubmit() {
+                const main = $('.main-radio:checked').val();
+                if (main) {
+                    const delChk = $(`.delete-checkbox[value="${main}"]`);
+                    if (delChk.length && delChk.is(':checked')) delChk.prop('checked', false);
+                }
+            }
 
-            // Extra safeguard before submit: prevent submitting mainImageId that is also marked for delete
-            (function ensureMainNotDeletedOnSubmit() {
-                var form = document.querySelector('form');
-                if (!form) return;
-                form.addEventListener('submit', function (ev) {
-                    // find chosen main
-                    var main = document.querySelector('.main-radio:checked');
-                    if (main) {
-                        var val = main.value;
-                        var delChk = document.querySelector('.delete-checkbox[value="' + val + '"]');
-                        if (delChk && delChk.checked) {
-                            // uncheck the main (so server won't see it) — server will pick another main if needed
-                            main.checked = false;
+            // Submit AJAX
+            $('#editProductForm').on('submit', function (ev) {
+                ev.preventDefault();
+                sanitizeBeforeSubmit();
+
+                const fd = new FormData(this);
+                $('#btnSave').prop('disabled', true).text('Đang lưu...');
+
+                $.ajax({
+                    url: '/Products/EditAjax',
+                    type: 'POST',
+                    data: fd,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        $('#btnSave').prop('disabled', false).text('Lưu thay đổi');
+                        if (res && res.success) {
+                            window.location.href = res.redirectUrl || '/Products/Index';
+                        } else {
+                            alert('Lỗi khi lưu: ' + (res.message || 'Không rõ'));
                         }
+                    },
+                    error: function () {
+                        alert("Lỗi hệ thống!");
                     }
-                    // no need to prevent submit; server-side will enforce invariants
                 });
-            })();
-        </script>
-    }
+            });
 
+            // Load dữ liệu sản phẩm
+            function loadProductData() {
+                $.getJSON('/Products/EditProduct/' + productId).done(function (data) {
+                    if (!data) { alert("Không tìm thấy sản phẩm"); return; }
+
+                    $('#Title').val(data.Title);
+                    $('#Description').val(data.Description);
+
+                    // Danh mục
+                    const $cat = $('#Category_Id').empty().append('<option value="">Chọn danh mục</option>');
+                    if (Array.isArray(data.Categories)) {
+                        data.Categories.forEach(c => {
+                            const selected = c.Id === data.Category_Id ? 'selected' : '';
+                            $cat.append(`<option value="${c.Id}" ${selected}>${c.Name}</option>`);
+                        });
+                    }
+
+                    // Trạng thái
+                    const $status = $('#Status').empty().append('<option value="">Chọn trạng thái</option>');
+                    if (Array.isArray(data.StatusList)) {
+                        data.StatusList.forEach(s => {
+                            const selected = s === data.Status ? 'selected' : '';
+                            $status.append(`<option value="${s}" ${selected}>${s}</option>`);
+                        });
+                    }
+
+                    // Ảnh
+                    const $imgRow = $('#existing-images-row').empty();
+                    if (!data.Images || data.Images.length === 0) {
+                        $imgRow.append('<div class="col-12 text-muted">Chưa có ảnh.</div>');
+                    } else {
+                        data.Images.forEach(img => {
+                            const checked = img.Is_Main ? 'checked' : '';
+                            $imgRow.append(`
+                            <div class="col-3 mb-3">
+                                <div class="card">
+                                    <img src="${img.Url}" class="card-img-top" style="height:120px; object-fit:cover;" />
+                                    <div class="card-body p-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input main-radio" type="radio" name="mainImageId" value="${img.Id}" ${checked} />
+                                            <label class="form-check-label">Ảnh đại diện</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input delete-checkbox" type="checkbox" name="deleteImages" value="${img.Id}" />
+                                            <label class="form-check-label text-danger">Xóa</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+                        });
+                        wireUpImageControls();
+                    }
+
+                    // SKU
+                    const $skuBody = $('#skuBody').empty();
+                    if (!data.Skus || data.Skus.length === 0) {
+                        $skuBody.append('<tr><td colspan="6" class="text-muted text-center">Chưa có SKU.</td></tr>');
+                    } else {
+                        data.Skus.forEach((s, i) => {
+                            $skuBody.append(`
+                            <tr>
+                                <td>
+                                    <input type="hidden" name="skus[${i}].Id" value="${s.Id}" />
+                                    <input type="hidden" name="skus[${i}].Product_Id" value="${data.Id}" />
+                                    <input type="text" name="skus[${i}].Sku" value="${s.Sku}" class="form-control" />
+                                </td>
+                                <td><input type="text" name="skus[${i}].Color" value="${s.Color}" class="form-control" /></td>
+                                <td><input type="text" name="skus[${i}].Size" value="${s.Size}" class="form-control" /></td>
+                                <td><input type="number" name="skus[${i}].Quantity" value="${s.Quantity}" class="form-control" /></td>
+                                <td><input type="number" name="skus[${i}].Price" value="${s.Price}" class="form-control" /></td>
+                                <td class="text-center"><button type="button" class="btn btn-sm btn-danger remove-row">×</button></td>
+                            </tr>
+                        `);
+                        });
+                    }
+                }).fail(function () {
+                    alert("Lỗi khi tải dữ liệu sản phẩm!");
+                });
+            }
+
+            // Gọi load dữ liệu khi trang mở
+            if (productId) {
+                loadProductData();
+            }
+        });
+    </script>
 }

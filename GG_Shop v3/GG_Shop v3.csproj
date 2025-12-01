@@ -133,11 +133,11 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\CategoriesController.cs" />
-    <Compile Include="Controllers\DashboardController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\OrdersController.cs" />
     <Compile Include="Controllers\ProductsController.cs" />
     <Compile Include="Controllers\UsersController.cs" />
+    <Compile Include="Controllers\U_shopController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -159,6 +159,7 @@
     <Content Include="Content\css\bootstrap.min.css" />
     <Content Include="Content\css\elegant-icons.css" />
     <Content Include="Content\css\font-awesome.min.css" />
+    <Content Include="Content\css\jquery-ui.min.css" />
     <Content Include="Content\css\magnific-popup.css" />
     <Content Include="Content\css\nice-select.css" />
     <Content Include="Content\css\owl.carousel.min.css" />
@@ -180,9 +181,11 @@
     <Content Include="Content\img\about\team-4.jpg" />
     <Content Include="Content\img\about\testimonial-author.jpg" />
     <Content Include="Content\img\about\testimonial-pic.jpg" />
+    <Content Include="Content\img\banner\835629fb503881e5f04217c59241dc9d.jpg" />
     <Content Include="Content\img\banner\banner-1.jpg" />
     <Content Include="Content\img\banner\banner-2.jpg" />
     <Content Include="Content\img\banner\banner-3.jpg" />
+    <Content Include="Content\img\banner\real-leather-red-moto-racer-jacket-front-view.jpg" />
     <Content Include="Content\img\blog\blog-1.jpg" />
     <Content Include="Content\img\blog\blog-2.jpg" />
     <Content Include="Content\img\blog\blog-3.jpg" />
@@ -259,6 +262,7 @@
     <Content Include="Content\img_admin\icon\12.png" />
     <Content Include="Content\img_admin\icon\13.png" />
     <Content Include="Content\img_admin\icon\14.png" />
+    <Content Include="Content\img_admin\icon\1421335.png" />
     <Content Include="Content\img_admin\icon\15.png" />
     <Content Include="Content\img_admin\icon\16.png" />
     <Content Include="Content\img_admin\icon\17.png" />
@@ -267,7 +271,11 @@
     <Content Include="Content\img_admin\icon\20.png" />
     <Content Include="Content\img_admin\icon\21.png" />
     <Content Include="Content\img_admin\icon\22.png" />
+    <Content Include="Content\img_admin\icon\icon-order-1.png" />
+    <Content Include="Content\img_admin\icon\images.png" />
     <Content Include="Content\img_admin\icon\pdf.png" />
+    <Content Include="Content\img_admin\icon\png-clipart-shopping-cart-icon-product-return-shopping-cart-retail-supermarket-thumbnail.png" />
+    <Content Include="Content\img_admin\icon\productzz.jpg" />
     <Content Include="Content\img_admin\intro\btn-icon.svg" />
     <Content Include="Content\img_admin\intro\clients\01.png" />
     <Content Include="Content\img_admin\intro\clients\02.png" />
@@ -415,6 +423,7 @@
     <Content Include="Content\img_admin\small\flag-06.png" />
     <Content Include="Content\img_admin\small\img-1.jpg" />
     <Content Include="Content\img_admin\small\jpg.svg" />
+    <Content Include="Content\img_admin\small\png-clipart-flag-of-vietnam-north-vietnam-south-vietnam-vietnam-war-flag-miscellaneous-angle-thumbnail.png" />
     <Content Include="Content\img_admin\small\xml.svg" />
     <Content Include="Content\img_admin\small\zip.svg" />
     <Content Include="Content\img_admin\sort_asc.png" />
@@ -4584,6 +4593,11 @@
     <Content Include="Content\vendor_admin\remixicon\fonts\remixicon.woff" />
     <Content Include="Content\vendor_admin\remixicon\fonts\remixicon.woff2" />
     <Content Include="Content\vendor_admin\remixicon\License" />
+    <None Include="Scripts\jquery.validate-vsdoc.js" />
+    <Content Include="Scripts\jquery.validate.js" />
+    <Content Include="Scripts\jquery.validate.min.js" />
+    <Content Include="Scripts\jquery.validate.unobtrusive.js" />
+    <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\js\bootstrap.min.js" />
     <Content Include="Scripts\js\jquery-3.3.1.min.js" />
     <Content Include="Scripts\js\jquery.countdown.min.js" />
@@ -4595,12 +4609,9 @@
     <Content Include="Scripts\js\mixitup.min.js" />
     <Content Include="Scripts\js\owl.carousel.min.js" />
     <Content Include="Scripts\js_admin\animated.js" />
-    <Content Include="Scripts\js_admin\apexcharts.js" />
     <Content Include="Scripts\js_admin\app.js" />
     <Content Include="Scripts\js_admin\backend-bundle.min.js" />
     <Content Include="Scripts\js_admin\bstreeview.js" />
-    <Content Include="Scripts\js_admin\chart-custom.js" />
-    <Content Include="Scripts\js_admin\charts.js" />
     <Content Include="Scripts\js_admin\core.js" />
     <Content Include="Scripts\js_admin\countdown.js" />
     <Content Include="Scripts\js_admin\country2.js" />
@@ -4608,9 +4619,6 @@
     <Content Include="Scripts\js_admin\croppy.js" />
     <Content Include="Scripts\js_admin\customizer.js" />
     <Content Include="Scripts\js_admin\flex-tree.min.js" />
-    <Content Include="Scripts\js_admin\highcharts-3d.js" />
-    <Content Include="Scripts\js_admin\highcharts-more.js" />
-    <Content Include="Scripts\js_admin\highcharts.js" />
     <Content Include="Scripts\js_admin\imagesloaded.pkgd.min.js" />
     <Content Include="Scripts\js_admin\intro.js" />
     <Content Include="Scripts\js_admin\jquery.appear.js" />
@@ -4649,6 +4657,7 @@
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\U_shop\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -4657,7 +4666,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <Content Include="Views\Dashboard\Index.cshtml" />
     <Content Include="Views\Shared\_Footer.cshtml" />
     <Content Include="Views\Shared\_Header.cshtml" />
     <Content Include="Views\Shared\_Layout_admin.cshtml" />
@@ -4668,12 +4676,10 @@
     <Content Include="Views\Users\Edit.cshtml" />
     <Content Include="Views\Users\Index.cshtml" />
     <Content Include="Views\Products\Create.cshtml" />
-    <Content Include="Views\Products\Delete.cshtml" />
     <Content Include="Views\Products\Details.cshtml" />
     <Content Include="Views\Products\Edit.cshtml" />
     <Content Include="Views\Products\Index.cshtml" />
     <Content Include="Views\Categories\Create.cshtml" />
-    <Content Include="Views\Categories\Delete.cshtml" />
     <Content Include="Views\Categories\Details.cshtml" />
     <Content Include="Views\Categories\Edit.cshtml" />
     <Content Include="Views\Categories\Index.cshtml" />

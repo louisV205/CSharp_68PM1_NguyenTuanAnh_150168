@@ -1,53 +1,74 @@
 ﻿@model GG_Shop_v3.Models.Category
-
 @{
-    ViewBag.Title = "Create";
+    ViewBag.Title = "Tạo danh mục mới";
     Layout = "~/Views/Shared/_Layout_admin.cshtml";
 }
+
 <div class="content-page">
     <div class="container-fluid">
-        <h2>Tạo danh mục</h2>
+        <h2>Tạo danh mục mới</h2>
 
-
-        @using (Html.BeginForm())
+        @using (Html.BeginForm("CreateCategory", "Categories", FormMethod.Post, new { id = "createForm" }))
         {
-            @Html.AntiForgeryToken()
-
-            <div class="form-horizontal">
-              
-                <hr />
-                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-                <div class="form-group">
-                    @Html.LabelFor(model => model.Name, "Tên danh mục", htmlAttributes: new { @class = "control-label col-md-2" })
-                    <div class="col-md-4">
-                        @Html.EditorFor(model => model.Name, new { htmlAttributes = new { @class = "form-control" } })
-                        @Html.ValidationMessageFor(model => model.Name, "", new { @class = "text-danger" })
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    @Html.LabelFor(model => model.Description, "Mô tả", htmlAttributes: new { @class = "control-label col-md-2" })
-                    <div class="col-md-4">
-                        @Html.EditorFor(model => model.Description, new { htmlAttributes = new { @class = "form-control" } })
-                        @Html.ValidationMessageFor(model => model.Description, "", new { @class = "text-danger" })
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <div class="col-md-offset-2 col-md-10">
-                        <input type="submit" value="Tạo mới" class="btn btn-primary mr-2" />
-                        <input type="reset" value="Nhập lại" class="btn btn-danger" />
-                    </div>
-                </div>
+            <div class="form-group">
+                @Html.LabelFor(model => model.Name, "Tên danh mục", new { @class = "control-label" })
+                @Html.TextBoxFor(model => model.Name, new { @class = "form-control form-control-sm" })
+                @Html.ValidationMessageFor(model => model.Name, "", new { @class = "text-danger" })
             </div>
-        }
 
-    <div class="col-md-offset-2 col-md-10">
-        @Html.ActionLink("Quay về danh sách", "Index")
-    </div>
+            <div class="form-group">
+                @Html.LabelFor(model => model.Description, "Mô tả", new { @class = "control-label" })
+                @Html.TextAreaFor(model => model.Description, new { @class = "form-control form-control-sm", rows = 4 })
+                @Html.ValidationMessageFor(model => model.Description, "", new { @class = "text-danger" })
+            </div>
 
-        @section Scripts {
-            @Scripts.Render("~/bundles/jqueryval")
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Tạo mới</button>
+                <button type="reset" class="btn btn-secondary">Nhập lại</button>
+                <a href="@Url.Action("Index", "Categories")" class="btn btn-info">Quay về danh sách</a>
+            </div>
         }
     </div>
 </div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+
+    <script>
+        $(document).ready(function () {
+            $("#createForm").submit(function (e) {
+                e.preventDefault();
+
+                // Kiểm tra client-side validation
+                if (!$(this).valid()) {
+                    return;
+                }
+
+                var data = $(this).serialize(); 
+
+                $.ajax({
+                    url: '@Url.Action("CreateCategory", "Categories")',
+                    type: 'POST',
+                    data: data,
+                    success: function (result) {
+                        console.log(result);
+                        if (result && result.success) {
+                            alert(result.message || 'Tạo danh mục thành công!');
+                            window.location.href = '@Url.Action("Index", "Categories")';
+                        } else {
+                            if (result && result.errors && result.errors.length > 0) {
+                                alert((result.message || 'Có lỗi') + '\n\n' + result.errors.join('\n'));
+                            } else {
+                                alert(result.message || 'Có lỗi khi tạo danh mục.');
+                            }
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.log('XHR Error:', xhr.responseText);
+                        alert('Lỗi kết nối hoặc server: ' + status + '. Xem console để biết chi tiết.');
+                    }
+                });
+            });
+        });
+    </script>
+}

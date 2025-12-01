@@ -1,13 +1,12 @@
-﻿ using GG_Shop_v3.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.Entity;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Mvc;
+using GG_Shop_v3.Models;
 
 namespace GG_Shop_v3.Controllers
 {
@@ -18,435 +17,451 @@ namespace GG_Shop_v3.Controllers
         // GET: Products
         public ActionResult Index()
         {
+            return View();
+        }
+
+        [HttpGet]
+        public JsonResult GetProducts()
+        {
             var products = db.products
                 .Include(p => p.Category)
                 .Include(p => p.Product_Images)
-                .Include(p => p.Product_Skus)
+                .Include(p => p.Product_Sku)   // chính xác tên collection
                 .ToList();
 
-            return View(products);
+            var result = products.Select(p => new
+            {
+                p.Id,
+                p.Title,
+                p.Description,
+                Category = p.Category != null ? new { p.Category.Id, p.Category.Name } : null,
+
+                Product_Images = (p.Product_Images ?? new List<Product_Image>())
+                    .Select(i => new
+                    {
+                        i.Id,
+                        Image_Url = string.IsNullOrEmpty(i.Image_Url) ? null : Url.Content(i.Image_Url),
+                        i.Is_Main
+                    }).ToList(),
+
+                Product_Skus = (p.Product_Sku ?? new List<Product_Sku>())
+                    .Select(s => new
+                    {
+                        s.Id,
+                        s.Sku,
+                        s.Color,
+                        s.Size,
+                        s.Price,
+                        s.Quantity
+                    }).ToList(),
+
+                TotalQty = (p.Product_Sku?.Sum(s => s.Quantity)) ?? 0,
+                MinPrice = (p.Product_Sku?.Any() ?? false) ? (p.Product_Sku.Min(s => s.Price)) : 0m,
+                MaxPrice = (p.Product_Sku?.Any() ?? false) ? (p.Product_Sku.Max(s => s.Price)) : 0m,
+
+                p.Status
+            }).ToList();
+
+            return Json(result, JsonRequestBehavior.AllowGet);
         }
 
-        // GET: Products/Details/5
-        public ActionResult Details(int? id)
+        // GET: Products/Details
+        public ActionResult Details(int id)
         {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
+            ViewBag.Id = id;
+            return View();
+        }
 
-            // Eager-load Category, Product_Images and Product_Skus
+        [HttpGet]
+        public JsonResult DetailsProduct(int id)
+        {
             var product = db.products
-                            .Include(p => p.Category)
-                            .Include(p => p.Product_Images)
-                            .Include(p => p.Product_Skus)
-                            .SingleOrDefault(p => p.Id == id.Value);
+                .Include(p => p.Category)
+                .Include(p => p.Product_Images)
+                .Include(p => p.Product_Sku) // sửa tên collection
+                .FirstOrDefault(p => p.Id == id);
 
             if (product == null)
-            {
-                return HttpNotFound();
-            }
+                return Json(null, JsonRequestBehavior.AllowGet);
 
-            return View(product);
+            var imageList = (product.Product_Images ?? new List<Product_Image>())
+                .Select(i => new
+                {
+                    i.Id,
+                    Url = string.IsNullOrEmpty(i.Image_Url) ? null : Url.Content(i.Image_Url),
+                    i.Is_Main
+                })
+                .ToList();
+
+            var skuList = (product.Product_Sku ?? new List<Product_Sku>())
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Sku,
+                    s.Color,
+                    s.Size,
+                    Price = s.Price,
+                    Quantity = s.Quantity,
+                    Total = s.Price * s.Quantity
+                })
+                .ToList();
+
+            var mainImgUrl = imageList.FirstOrDefault(i => i.Is_Main)?.Url ?? imageList.FirstOrDefault()?.Url;
+
+            var json = new
+            {
+                product.Id,
+                product.Title,
+                product.Description,
+                CategoryName = product.Category?.Name,
+                MainImageUrl = mainImgUrl,
+                Images = imageList,
+                Skus = skuList,
+                TotalQty = skuList.Sum(s => (int?)s.Quantity) ?? 0,
+                MinPrice = skuList.Any() ? skuList.Min(s => s.Price) : 0m,
+                MaxPrice = skuList.Any() ? skuList.Max(s => s.Price) : 0m,
+                product.Status
+            };
+
+            return Json(json, JsonRequestBehavior.AllowGet);
         }
 
-
-        // GET: Products/Create
+        // GET: Create Product (form)
         public ActionResult Create()
         {
             ViewBag.Category_Id = new SelectList(db.categories, "Id", "Name");
             return View();
         }
 
-        // POST: Products/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(
-    [Bind(Include = "Id,Title,Category_Id,Description,Status")] Product product,
-    List<Product_Sku> skus,
-    IEnumerable<HttpPostedFileBase> images,
-    decimal? BasePrice,
-    int? BaseQuantity)
+        public JsonResult CreateAjax()
         {
-            // Chuẩn hoá tên sản phẩm
-            if (product != null && !string.IsNullOrWhiteSpace(product.Title))
-                product.Title = product.Title.Trim();
-
-            // Kiểm tra Title rỗng
-            if (product == null || string.IsNullOrWhiteSpace(product.Title))
-            {
-                ModelState.AddModelError("Title", "Tên sản phẩm không được để trống.");
-            }
-            else
-            {
-                // Kiểm tra trùng tên – tiếng Việt
-                string titleLower = product.Title.ToLower();
-
-                bool exists = db.products
-                                .Any(p => p.Title.ToLower() == titleLower);
-
-                if (exists)
-                {
-                    ModelState.AddModelError("Title", "Tên sản phẩm đã tồn tại. Vui lòng chọn tên khác.");
-                }
-            }
-
-            // Nếu lỗi → trả về form kèm thông báo
-            if (!ModelState.IsValid)
-            {
-                ViewBag.Category_Id = new SelectList(db.categories, "Id", "Name", product?.Category_Id);
-                return View(product);
-            }
-
-            // -------- Không có lỗi → bắt đầu lưu ----------
             using (var tran = db.Database.BeginTransaction())
             {
                 try
                 {
-                    // 1) Lưu product
+                    string title = Request["Title"];
+                    string description = Request["Description"];
+                    int categoryId = int.Parse(Request["Category_Id"]);
+                    string status = Request["Status"];
+
+                    if (string.IsNullOrWhiteSpace(title))
+                        return Json(new { success = false, message = "Tên sản phẩm không được để trống." });
+
+                    if (db.products.Any(p => p.Title.Trim().ToLower() == title.Trim().ToLower()))
+                        return Json(new { success = false, message = "Tên sản phẩm đã tồn tại." });
+
+                    var product = new Product
+                    {
+                        Title = title.Trim(),
+                        Description = description,
+                        Status = status,
+                        Category_Id = categoryId,
+                    };
+
                     db.products.Add(product);
                     db.SaveChanges();
 
-                    // 2) Lưu SKUs
-                    if (skus != null)
+                    // Lưu ảnh
+                    var uploadFolder = Server.MapPath("~/Uploads/Products");
+                    if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
+
+                    var files = Request.Files;
+                    for (int i = 0; i < files.Count; i++)
                     {
-                        foreach (var s in skus)
+                        var file = files[i];
+                        if (file == null || file.ContentLength == 0) continue;
+
+                        var fileName = Guid.NewGuid().ToString("N") + Path.GetExtension(file.FileName);
+                        var path = Path.Combine(uploadFolder, fileName);
+
+                        file.SaveAs(path);
+
+                        db.product_images.Add(new Product_Image
                         {
-                            bool isEmpty =
-                                string.IsNullOrWhiteSpace(s.Sku)
-                                && string.IsNullOrWhiteSpace(s.Color)
-                                && string.IsNullOrWhiteSpace(s.Size)
-                                && (s.Quantity == 0)
-                                && (s.Price == 0m);
-
-                            if (isEmpty) continue;
-
-                            s.Product_Id = product.Id;
-
-                            if ((s.Price == 0m || s.Price == null) && BasePrice.HasValue)
-                                s.Price = BasePrice.Value;
-
-                            if ((s.Quantity == 0) && BaseQuantity.HasValue)
-                                s.Quantity = BaseQuantity.Value;
-
-                            db.product_skus.Add(s);
-                        }
+                            Product_Id = product.Id,
+                            Image_Url = "/Uploads/Products/" + fileName,
+                            Is_Main = i == 0
+                        });
                     }
 
-                    // 3) Lưu ảnh
-                    if (images != null)
+                    // Lưu SKU
+                    var keys = Request.Form.AllKeys.Where(k => k.StartsWith("skus[") && k.EndsWith("].Sku"));
+                    foreach (var key in keys)
                     {
-                        var uploadFolder = Server.MapPath("~/uploads/products");
-                        if (!Directory.Exists(uploadFolder))
-                            Directory.CreateDirectory(uploadFolder);
+                        string idx = key.Substring(5, key.IndexOf("]") - 5);
 
-                        foreach (var file in images)
+                        db.product_skus.Add(new Product_Sku
                         {
-                            if (file == null || file.ContentLength <= 0) continue;
-
-                            var ext = Path.GetExtension(file.FileName);
-                            var unique = Guid.NewGuid().ToString("N") + ext;
-                            var path = Path.Combine(uploadFolder, unique);
-
-                            file.SaveAs(path);
-
-                            db.product_images.Add(new Product_Image
-                            {
-                                Product_Id = product.Id,
-                                Image_Url = "/uploads/products/" + unique,
-                                Is_Main = false
-                            });
-                        }
+                            Product_Id = product.Id,
+                            Sku = Request[$"skus[{idx}].Sku"],
+                            Color = Request[$"skus[{idx}].Color"],
+                            Size = Request[$"skus[{idx}].Size"],
+                            Quantity = int.Parse(Request[$"skus[{idx}].Quantity"]),
+                            Price = decimal.Parse(Request[$"skus[{idx}].Price"]),
+                        });
                     }
 
                     db.SaveChanges();
                     tran.Commit();
 
-                    return RedirectToAction("Index");
+                    return Json(new { success = true, redirectUrl = Url.Action("Index") });
                 }
                 catch (Exception ex)
                 {
                     tran.Rollback();
-                    ModelState.AddModelError("", "Có lỗi xảy ra khi lưu sản phẩm: " + ex.Message);
+                    return Json(new { success = false, message = ex.Message });
                 }
             }
-
-            ViewBag.Category_Id = new SelectList(db.categories, "Id", "Name", product?.Category_Id);
-            return View(product);
         }
-
-
-
-
-        // GET: Products/Edit/5
-        public ActionResult Edit(int? id)
+        [HttpGet]
+        public JsonResult CheckTitle(string title)
         {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-
-            var product = db.products
-                .Include(p => p.Product_Images)
-                .Include(p => p.Product_Skus)
-                .SingleOrDefault(p => p.Id == id);
-
-            if (product == null)
-            {
-                return HttpNotFound();
-            }
-
-            ViewBag.Category_Id = new SelectList(db.categories, "Id", "Name", product.Category_Id);
-            return View(product);
+            bool exists = db.products.Any(p => p.Title.ToLower() == title.Trim().ToLower());
+            return Json(new { exists }, JsonRequestBehavior.AllowGet);
         }
 
-        // POST: Products/Edit/5
-        // POST: Products/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(Product product, List<Product_Sku> skus, int? mainImageId, int[] deleteImages, IEnumerable<HttpPostedFileBase> newImages)
+
+        // GET: Products/Edit
+        public ActionResult Edit(int id)
         {
-            if (product == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-
-            // tìm bản ghi hiện có từ DB (kèm các relation cần thiết khi hiển thị lại)
-            var existingProduct = db.products
-                                    .Include(p => p.Product_Images)
-                                    .Include(p => p.Product_Skus)
-                                    .SingleOrDefault(p => p.Id == product.Id);
-
-            if (existingProduct == null) return HttpNotFound();
-
-            if (ModelState.IsValid)
-            {
-                using (var tran = db.Database.BeginTransaction())
-                {
-                    try
-                    {
-                        // ----- 1) XÓA ẢNH (nếu có)
-                        var deletedSet = new HashSet<int>((deleteImages ?? new int[0]));
-                        if (deletedSet.Count > 0)
-                        {
-                            foreach (var imgId in deletedSet)
-                            {
-                                var pi = db.product_images.Find(imgId);
-                                if (pi != null)
-                                {
-                                    // nếu ảnh đang là main, tạm bỏ flag (server sẽ chọn lại sau)
-                                    if (pi.Is_Main) pi.Is_Main = false;
-
-                                    // xóa file vật lý (try/catch)
-                                    try
-                                    {
-                                        var physical = Server.MapPath(pi.Image_Url);
-                                        if (System.IO.File.Exists(physical))
-                                        {
-                                            System.IO.File.Delete(physical);
-                                        }
-                                    }
-                                    catch
-                                    {
-                                        // ignore hoặc log
-                                    }
-
-                                    db.product_images.Remove(pi);
-                                }
-                            }
-                            db.SaveChanges();
-                        }
-
-                        // ----- 2) LƯU ẢNH MỚI (nếu có)
-                        if (newImages != null)
-                        {
-                            var uploadFolder = Server.MapPath("~/uploads/products");
-                            if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
-
-                            foreach (var file in newImages)
-                            {
-                                if (file == null || file.ContentLength <= 0) continue;
-                                var ext = Path.GetExtension(file.FileName);
-                                var unique = Guid.NewGuid().ToString("N") + ext;
-                                var path = Path.Combine(uploadFolder, unique);
-                                file.SaveAs(path);
-
-                                var pimg = new Product_Image
-                                {
-                                    Product_Id = existingProduct.Id,
-                                    Image_Url = "/uploads/products/" + unique,
-                                    Is_Main = false
-                                };
-                                db.product_images.Add(pimg);
-                            }
-
-                            db.SaveChanges(); // cần để ảnh mới tồn tại trong DB nếu cần set main sau
-                        }
-
-                        // ----- 3) XỬ LÝ MAIN IMAGE
-                        // Nếu user chọn mainImageId nhưng đó là ảnh đã bị xóa, ta bỏ qua
-                        if (mainImageId.HasValue && deletedSet.Contains(mainImageId.Value))
-                        {
-                            mainImageId = null;
-                        }
-
-                        // đặt lại Is_Main cho tất cả ảnh của product
-                        var imgsAll = db.product_images.Where(x => x.Product_Id == existingProduct.Id).ToList();
-                        if (mainImageId.HasValue)
-                        {
-                            foreach (var it in imgsAll)
-                            {
-                                it.Is_Main = (it.Id == mainImageId.Value);
-                                db.Entry(it).State = EntityState.Modified;
-                            }
-                        }
-                        else
-                        {
-                            // nếu không chỉ định main, đảm bảo có 1 ảnh làm main nếu còn ảnh
-                            if (imgsAll.Any())
-                            {
-                                // nếu không có ảnh nào là main, set ảnh đầu làm main
-                                if (!imgsAll.Any(x => x.Is_Main))
-                                {
-                                    imgsAll.First().Is_Main = true;
-                                    db.Entry(imgsAll.First()).State = EntityState.Modified;
-                                }
-                            }
-                        }
-                        db.SaveChanges();
-
-                        // ----- 4) XỬ LÝ SKUs
-                        if (skus != null)
-                        {
-                            foreach (var s in skus)
-                            {
-                                if (s.Id > 0)
-                                {
-                                    // update existing SKU: tìm từ DB và cập nhật trường rõ ràng
-                                    var existSku = db.product_skus.Find(s.Id);
-                                    if (existSku != null)
-                                    {
-                                        existSku.Sku = s.Sku;
-                                        existSku.Color = s.Color;
-                                        existSku.Size = s.Size;
-                                        existSku.Quantity = s.Quantity;
-                                        existSku.Price = s.Price;
-                                        db.Entry(existSku).State = EntityState.Modified;
-                                    }
-                                }
-                                else
-                                {
-                                    // thêm SKU mới nếu có Sku hoặc color/size
-                                    if (!string.IsNullOrWhiteSpace(s.Sku) || !string.IsNullOrWhiteSpace(s.Color) || !string.IsNullOrWhiteSpace(s.Size))
-                                    {
-                                        s.Product_Id = existingProduct.Id;
-                                        db.product_skus.Add(s);
-                                    }
-                                }
-                            }
-                            db.SaveChanges();
-                        }
-
-                        // ----- 5) CẬP NHẬT TRƯỜNG PRODUCT
-                        existingProduct.Title = product.Title;
-                        existingProduct.Category_Id = product.Category_Id;
-                        existingProduct.Description = product.Description;
-                        existingProduct.Status = product.Status;
-                        db.Entry(existingProduct).State = EntityState.Modified;
-
-                        db.SaveChanges();
-                        tran.Commit();
-
-                        return RedirectToAction("Details", new { id = existingProduct.Id });
-                    }
-                    catch (Exception ex)
-                    {
-                        tran.Rollback();
-                        ModelState.AddModelError("", "Có lỗi khi lưu: " + ex.Message);
-                    }
-                }
-            }
-
-            // nếu lỗi: nạp lại dữ liệu để view dùng
-            ViewBag.Category_Id = new SelectList(db.categories, "Id", "Name", product.Category_Id);
-            // reload images & skus để view hiển thị
-            existingProduct = db.products
-                                .Include(p => p.Product_Images)
-                                .Include(p => p.Product_Skus)
-                                .SingleOrDefault(p => p.Id == product.Id);
-            return View(existingProduct);
+            ViewBag.Id = id;
+            return View(); // View không cần Model, chỉ cần Id để JS gọi API
         }
 
-
-
-
-        // GET: Products/Delete/5
-        public ActionResult Delete(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Product product = db.products.Find(id);
-            if (product == null)
-            {
-                return HttpNotFound();
-            }
-            return View(product);
-        }
-
-        // POST: Products/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
+        [HttpGet]
+        public JsonResult EditProduct(int id)
         {
             var product = db.products
-                .Include(p => p.Product_Skus)
+                .Include(p => p.Category)
                 .Include(p => p.Product_Images)
+                .Include(p => p.Product_Sku)
                 .FirstOrDefault(p => p.Id == id);
 
             if (product == null)
-                return HttpNotFound();
+                return Json(null, JsonRequestBehavior.AllowGet);
 
-            // Xóa các ảnh vật lý và bản ghi Product_Images
+            // Danh sách ảnh
+            var imageList = (product.Product_Images ?? new List<Product_Image>())
+                .Select(i => new
+                {
+                    i.Id,
+                    Url = string.IsNullOrEmpty(i.Image_Url) ? null : Url.Content(i.Image_Url),
+                    i.Is_Main
+                }).ToList();
+
+            // Danh sách SKU
+            var skuList = (product.Product_Sku ?? new List<Product_Sku>())
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Sku,
+                    s.Color,
+                    s.Size,
+                    Price = s.Price,
+                    Quantity = s.Quantity
+                }).ToList();
+
+            // Danh sách danh mục
+            var categories = db.categories
+                .Select(c => new { c.Id, c.Name })
+                .ToList();
+
+            // Danh sách trạng thái cố định
+            var statusList = new[] {
+        "Đang bán",
+        "Chưa bán",
+        "Đã hết"
+    };
+
+            // Ảnh đại diện
+            var mainImgUrl = imageList.FirstOrDefault(i => i.Is_Main)?.Url
+                             ?? imageList.FirstOrDefault()?.Url;
+
+            // JSON trả về
+            var json = new
+            {
+                product.Id,
+                product.Title,
+                product.Description,
+                product.Category_Id,
+                CategoryName = product.Category?.Name,
+                Categories = categories,
+                Status = product.Status,
+                StatusList = statusList,
+                MainImageUrl = mainImgUrl,
+                Images = imageList,
+                Skus = skuList,
+                TotalQty = skuList.Sum(s => (int?)s.Quantity) ?? 0,
+                MinPrice = skuList.Any() ? skuList.Min(s => s.Price) : 0m,
+                MaxPrice = skuList.Any() ? skuList.Max(s => s.Price) : 0m
+            };
+
+            return Json(json, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        public JsonResult EditAjax()
+        {
+            try
+            {
+                int id = int.Parse(Request["Id"]);
+                string title = Request["Title"];
+                string description = Request["Description"];
+                int categoryId = int.Parse(Request["Category_Id"]);
+                string status = Request["Status"];
+
+                // Tìm sản phẩm cần sửa
+                var product = db.products.Include(p => p.Product_Images).Include(p => p.Product_Sku).FirstOrDefault(p => p.Id == id);
+                if (product == null)
+                    return Json(new { success = false, message = "Không tìm thấy sản phẩm." });
+
+                // Cập nhật thông tin cơ bản
+                product.Title = title;
+                product.Description = description;
+                product.Category_Id = categoryId;
+                product.Status = status;
+
+                // Xử lý ảnh cần xóa
+                var deleteImageIds = Request.Form.GetValues("deleteImages");
+                if (deleteImageIds != null)
+                {
+                    foreach (var imgIdStr in deleteImageIds)
+                    {
+                        if (int.TryParse(imgIdStr, out int imgId))
+                        {
+                            var img = product.Product_Images.FirstOrDefault(i => i.Id == imgId);
+                            if (img != null)
+                                db.product_images.Remove(img);
+                        }
+                    }
+                }
+
+                // Cập nhật ảnh đại diện
+                string mainImageIdStr = Request["mainImageId"];
+                if (int.TryParse(mainImageIdStr, out int mainImageId))
+                {
+                    foreach (var img in product.Product_Images)
+                    {
+                        img.Is_Main = (img.Id == mainImageId);
+                    }
+                }
+
+                // Xử lý ảnh mới upload
+                var files = Request.Files;
+                for (int i = 0; i < files.Count; i++)
+                {
+                    var file = files[i];
+                    if (file != null && file.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                        string path = Path.Combine(Server.MapPath("~/Uploads/Products"), fileName);
+                        file.SaveAs(path);
+
+                        product.Product_Images.Add(new Product_Image
+                        {
+                            Image_Url = "/Uploads/Products/" + fileName,
+                            Is_Main = false,
+                            Product_Id = product.Id
+                        });
+                    }
+                }
+
+                // Xóa SKU cũ
+                db.product_skus.RemoveRange(product.Product_Sku);
+
+                // Thêm SKU mới
+                var skuKeys = Request.Form.AllKeys.Where(k => k.StartsWith("skus[") && k.EndsWith("].Sku")).ToList();
+                foreach (var key in skuKeys)
+                {
+                    var prefix = key.Substring(0, key.IndexOf("].Sku") + 1); // skus[0], skus[1], ...
+                    string sku = Request[prefix + ".Sku"];
+                    string color = Request[prefix + ".Color"];
+                    string size = Request[prefix + ".Size"];
+                    int quantity = int.TryParse(Request[prefix + ".Quantity"], out int q) ? q : 0;
+                    decimal price = decimal.TryParse(Request[prefix + ".Price"], out decimal p) ? p : 0;
+
+                    product.Product_Sku.Add(new Product_Sku
+                    {
+                        Sku = sku,
+                        Color = color,
+                        Size = size,
+                        Quantity = quantity,
+                        Price = price,
+                        Product_Id = product.Id
+                    });
+                }
+
+                db.Entry(product).State = EntityState.Modified;
+                db.SaveChanges();
+
+                return Json(new { success = true, redirectUrl = Url.Action("Index") });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi lưu: " + ex.Message });
+            }
+        }
+
+
+        // POST: Delete Product (AJAX)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult DeleteAjax(int id)
+        {
+            var product = db.products
+                .Include(p => p.Product_Images)
+                .Include(p => p.Product_Sku)
+                .FirstOrDefault(p => p.Id == id);
+
+            if (product == null)
+                return Json(new { success = false, message = "Không tìm thấy sản phẩm" });
+
+            // Xóa ảnh vật lý
             if (product.Product_Images != null)
             {
                 foreach (var img in product.Product_Images.ToList())
                 {
-                    // xóa file vật lý nếu tồn tại
                     try
                     {
                         var path = Server.MapPath(img.Image_Url);
                         if (System.IO.File.Exists(path))
                             System.IO.File.Delete(path);
                     }
-                    catch { /* ignore */ }
-
-                    db.product_images.Remove(img);
+                    catch { }
                 }
             }
 
-            // Xóa các SKU liên quan
-            if (product.Product_Skus != null)
-            {
-                foreach (var sku in product.Product_Skus.ToList())
-                {
-                    db.product_skus.Remove(sku);
-                }
-            }
-
-            // Cuối cùng xóa product
+            db.product_images.RemoveRange(product.Product_Images ?? new List<Product_Image>());
+            db.product_skus.RemoveRange(product.Product_Sku ?? new List<Product_Sku>());
             db.products.Remove(product);
             db.SaveChanges();
 
-            return RedirectToAction("Index");
+            return Json(new { success = true, message = "Xóa thành công" });
+        }
+
+        // GET: Trạng thái sản phẩm
+        [HttpGet]
+        public JsonResult GetStatusList()
+        {
+            var statuses = new[] { "Đang bán", "Chưa bán", "Đã hết" };
+            return Json(statuses, JsonRequestBehavior.AllowGet);
+        }
+
+        // GET: Danh sách category
+        [HttpGet]
+        public JsonResult GetCategories()
+        {
+            var categories = db.categories
+                .Select(c => new { c.Id, c.Name })
+                .ToList();
+            return Json(categories, JsonRequestBehavior.AllowGet);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
-            {
                 db.Dispose();
-            }
             base.Dispose(disposing);
         }
     }

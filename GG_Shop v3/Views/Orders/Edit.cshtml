@@ -155,25 +155,23 @@
             $('#edit_order_form').on('submit', function (e) {
                 e.preventDefault();
 
-                var formData = $(this).serialize();
+                var formData = $(this).serializeArray(); // chuyển thành array object
 
                 // Nếu Promo_Id rỗng thì set null
-                if ($('#Promo_Id').val() === "") {
-                    formData += "&Promo_Id=null";
-                }
+                var promoField = formData.find(f => f.name === 'Promo_Id');
+                if (promoField && promoField.value === "") promoField.value = null;
 
                 $.ajax({
                     url: '/Orders/UpdateOrder',
                     type: 'POST',
-                    data: formData,
+                    data: $.param(formData), // convert array thành query string
+                    dataType: 'json',        // quan trọng: parse JSON từ server
                     success: function (res) {
-                        // Nếu server trả về string "Cập nhật thành công"
-                        if (res === "Cập nhật thành công") {
-                            alert(res);
-                            // Redirect về danh sách
+                        if (res.success) {
+                            alert(res.message);
                             window.location.href = '/Orders/Index';
                         } else {
-                            alert(res);
+                            alert(res.message);
                         }
                     },
                     error: function () {
@@ -181,6 +179,7 @@
                     }
                 });
             });
+
 
         });
     </script>
