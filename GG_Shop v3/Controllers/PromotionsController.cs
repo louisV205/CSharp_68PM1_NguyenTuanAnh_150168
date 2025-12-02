@@ -45,5 +45,27 @@ namespace GG_Shop_v3.Controllers
         }
 
 
+        public String delePromotions()
+        {
+            string rs = "";
+            string Id_str = Request["Id"];
+            int Id;
+            int.TryParse(Id_str, out Id);
+            try
+            {
+                Promotion promo = db.promotions.Find(Id);
+                User user = db.users.Find(Id);
+                promo.Status = "Ngừng hoạt động";
+                db.Entry(promo).State = EntityState.Modified;
+                db.SaveChanges();
+                rs = "Mã giảm giá đã dừng hoạt động";
+            }
+            catch (Exception ex)
+            {
+                rs = "Dừng hoạt động mã giảm giá thất bại";
+            }
+            return rs;
+        }
+
     }
 }
