@@ -1,0 +1,75 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\PC\\source\\repos\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{0AC27A0E-15BB-4109-AE86-41E2E127AD90}|GG_Shop v3\\GG_Shop v3.csproj|c:\\users\\pc\\source\\repos\\gg_shop v3\\views\\shopdetail\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{0AC27A0E-15BB-4109-AE86-41E2E127AD90}|GG_Shop v3\\GG_Shop v3.csproj|solutionrelative:gg_shop v3\\views\\shopdetail\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0AC27A0E-15BB-4109-AE86-41E2E127AD90}|GG_Shop v3\\GG_Shop v3.csproj|c:\\users\\pc\\source\\repos\\gg_shop v3\\controllers\\shopdetail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0AC27A0E-15BB-4109-AE86-41E2E127AD90}|GG_Shop v3\\GG_Shop v3.csproj|solutionrelative:gg_shop v3\\controllers\\shopdetail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0AC27A0E-15BB-4109-AE86-41E2E127AD90}|GG_Shop v3\\GG_Shop v3.csproj|c:\\users\\pc\\source\\repos\\gg_shop v3\\controllers\\u_shopcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0AC27A0E-15BB-4109-AE86-41E2E127AD90}|GG_Shop v3\\GG_Shop v3.csproj|solutionrelative:gg_shop v3\\controllers\\u_shopcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\PC\\source\\repos\\GG_Shop v3\\Views\\ShopDetail\\Index.cshtml",
+              "RelativeDocumentMoniker": "GG_Shop v3\\Views\\ShopDetail\\Index.cshtml",
+              "ToolTip": "C:\\Users\\PC\\source\\repos\\GG_Shop v3\\Views\\ShopDetail\\Index.cshtml",
+              "RelativeToolTip": "GG_Shop v3\\Views\\ShopDetail\\Index.cshtml",
+              "ViewState": "AgIAACQCAAAAAAAAAADwv0sCAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-12-05T19:14:49.794Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "U_shopController.cs",
+              "DocumentMoniker": "C:\\Users\\PC\\source\\repos\\GG_Shop v3\\Controllers\\U_shopController.cs",
+              "RelativeDocumentMoniker": "GG_Shop v3\\Controllers\\U_shopController.cs",
+              "ToolTip": "C:\\Users\\PC\\source\\repos\\GG_Shop v3\\Controllers\\U_shopController.cs",
+              "RelativeToolTip": "GG_Shop v3\\Controllers\\U_shopController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAF0AAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-05T19:09:08.26Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ShopDetail.cs",
+              "DocumentMoniker": "C:\\Users\\PC\\source\\repos\\GG_Shop v3\\Controllers\\ShopDetail.cs",
+              "RelativeDocumentMoniker": "GG_Shop v3\\Controllers\\ShopDetail.cs",
+              "ToolTip": "C:\\Users\\PC\\source\\repos\\GG_Shop v3\\Controllers\\ShopDetail.cs",
+              "RelativeToolTip": "GG_Shop v3\\Controllers\\ShopDetail.cs",
+              "ViewState": "AgIAAHIBAAAAAAAAAAAswJoBAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-05T19:04:18.669Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
