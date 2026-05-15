@@ -27,19 +27,31 @@ namespace WindowsFormsApp1
             string username = txtUsername.Text.Trim();
             string password = txtPassword.Text.Trim();
 
-            string emailSinhVien = "tuananh250805@gmail.com"; 
-            string mssv = "123456";                          
+            string emailSinhVien = "tuananh258805@gmail.com";
+            string mssv = "123456";
 
             if (username == emailSinhVien && password == mssv)
             {
                 MessageBox.Show("Đăng nhập thành công!", "Thông báo",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Mở Form Quản lý Sinh Viên
+                Form2 f = new Form2();
+                f.Show();
+
+                // Ẩn Form Login
+                this.Hide();
             }
             else
             {
                 MessageBox.Show("Đăng nhập thất bại!", "Thông báo",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
