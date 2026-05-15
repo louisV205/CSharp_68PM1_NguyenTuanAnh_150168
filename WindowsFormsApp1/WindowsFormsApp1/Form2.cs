@@ -29,7 +29,9 @@ namespace WindowsFormsApp1
 
         private void quảnLíMônHọcToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            Quanlilophoc qllh = new Quanlilophoc();
+            qllh.Show();
+            this.Hide();
         }
 
         private void Form2_Load(object sender, EventArgs e)
@@ -70,6 +72,14 @@ namespace WindowsFormsApp1
         private void button4_Click_1(object sender, EventArgs e)
         {
 
+        }
+
+        private void đăngXuấtToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Form1 login = new Form1();
+            login.Show();
+
+            this.Hide();
         }
     }
 }

@@ -31,5 +31,29 @@ namespace WindowsFormsApp1
         {
 
         }
+        private void quảnLíSinhViênToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Form2 form2 = new Form2();
+            form2.Show();
+
+            this.Hide();
+        }
+
+        private void đăngXuấtToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Form1 login = new Form1();
+            login.Show();
+
+            this.Hide();
+        }
+
+        private void quảnLíSinhViênToolStripMenuItem_Click_1(object sender, EventArgs e)
+        {
+            Form2 form2 = new Form2();
+            form2.Show();
+
+            this.Hide();
+
+        }
     }
 }
